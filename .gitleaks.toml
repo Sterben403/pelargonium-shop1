@@ -1,0 +1,10 @@
+title = "Pelargonium Shop secret scan"
+
+[extend]
+useDefault = true
+
+# The local-development owner password is intentionally public: it is the documented demo default.
+# Production refuses to start with it (backend/app/config.py), real secrets live only in environment variables.
+[allowlist]
+description = "Documented local demo password"
+regexes = ['''pelargonium2026''']
