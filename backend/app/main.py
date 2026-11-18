@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from fastapi.staticfiles import StaticFiles
 
 from . import config
@@ -58,5 +60,12 @@ def root():
 
 
 @app.get("/api/health", tags=["meta"])
-def health():
-    return {"status": "ok"}
+def health(response: Response):
+    """Used by the release job: the right commit is running and the database answers."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        database = "ok"
+    except SQLAlchemyError:
+        database, response.status_code = "unavailable", 503
+    return {"status": "ok" if database == "ok" else "degraded", "database": database, "version": config.VERSION}

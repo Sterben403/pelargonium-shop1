@@ -23,3 +23,14 @@ CORS_ORIGINS = _list(os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127
 CORS_ORIGIN_REGEX = os.getenv("CORS_ORIGIN_REGEX", r"https://([a-z0-9-]+\.)*tilda\.(ws|cc)")
 TILDA_WEBHOOK_TOKEN = os.getenv("TILDA_WEBHOOK_TOKEN", "dev-tilda-token")
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "8"))
+# Commit the running build was made from (set by the Docker image build in CI)
+VERSION = os.getenv("APP_VERSION", "dev")
+IS_PRODUCTION = os.getenv("APP_ENV") == "production"
+
+# Never run production with the demo secrets from this file.
+if IS_PRODUCTION:
+    _defaults = {"ADMIN_PASSWORD": "pelargonium2026", "SECRET_KEY": "dev-secret-change-me",
+                 "TILDA_WEBHOOK_TOKEN": "dev-tilda-token"}
+    _unsafe = [name for name, value in _defaults.items() if globals()[name] == value]
+    if _unsafe:
+        raise RuntimeError(f"Set these environment variables for production: {', '.join(_unsafe)}")
