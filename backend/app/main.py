@@ -1,3 +1,5 @@
+import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -6,16 +8,33 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 from . import config
 from .db import Base, SessionLocal, engine
 from .routers import admin, public, tilda
 from .seed import seed_if_empty
 
+log = logging.getLogger("pelargonium")
+
+
+def wait_for_database(attempts: int = 30, delay: float = 1.0) -> None:
+    """A database container may still be starting when the app starts: retry instead of crashing."""
+    for attempt in range(1, attempts + 1):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            return
+        except OperationalError:
+            if attempt == attempts:
+                raise
+            log.warning("Database is not ready (attempt %s/%s), retrying in %ss", attempt, attempts, delay)
+            time.sleep(delay)
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    wait_for_database()
     Base.metadata.create_all(engine)
     with SessionLocal() as db:
         seed_if_empty(db)
