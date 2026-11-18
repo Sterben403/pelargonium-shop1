@@ -13,7 +13,16 @@ def _list(value: str) -> list[str]:
 
 
 # PostgreSQL from docker-compose.yml by default; any SQLAlchemy URL works (e.g. sqlite:///./dev.db)
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg://pelargonium:pelargonium@localhost:5433/pelargonium")
+def _database_url(url: str) -> str:
+    # Hosted PostgreSQL (Neon, Render) gives postgres:// or postgresql:// URLs; SQLAlchemy needs the psycopg driver name
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+DATABASE_URL = _database_url(
+    os.getenv("DATABASE_URL", "postgresql+psycopg://pelargonium:pelargonium@localhost:5433/pelargonium"))
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", BASE_DIR / "uploads"))
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "pelargonium2026")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
@@ -24,7 +33,8 @@ CORS_ORIGIN_REGEX = os.getenv("CORS_ORIGIN_REGEX", r"https://([a-z0-9-]+\.)*tild
 TILDA_WEBHOOK_TOKEN = os.getenv("TILDA_WEBHOOK_TOKEN", "dev-tilda-token")
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "8"))
 # Commit the running build was made from (set by the Docker image build in CI)
-VERSION = os.getenv("APP_VERSION", "dev")
+# Render passes the deployed commit as RENDER_GIT_COMMIT
+VERSION = os.getenv("APP_VERSION") or os.getenv("RENDER_GIT_COMMIT") or "dev"
 IS_PRODUCTION = os.getenv("APP_ENV") == "production"
 
 # Never run production with the demo secrets from this file.

@@ -20,3 +20,12 @@ def test_production_refuses_demo_secrets(monkeypatch):
         monkeypatch.undo()  # restore the test environment before re-reading settings
         importlib.reload(config)
     assert config.ADMIN_PASSWORD == "test-password"
+
+
+@pytest.mark.parametrize("raw, expected", [
+    ("postgresql://u:p@ep-x.neon.tech/neondb?sslmode=require", "postgresql+psycopg://u:p@ep-x.neon.tech/neondb?sslmode=require"),
+    ("postgres://u:p@host/db", "postgresql+psycopg://u:p@host/db"),
+    ("postgresql+psycopg://u:p@host/db", "postgresql+psycopg://u:p@host/db"),
+])
+def test_hosted_database_urls_get_psycopg_driver(raw, expected):
+    assert config._database_url(raw) == expected
