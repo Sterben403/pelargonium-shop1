@@ -31,6 +31,20 @@ services:
     ports:
       - "8081:8080"
 
+  # The site itself in a container (demo stand): http://localhost:8020
+  # Uptime Kuma checks it inside the Docker network at http://app:8000/api/health
+  app:
+    build: ./backend
+    container_name: pelargonium-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://pelargonium:pelargonium@db:5432/pelargonium
+    ports:
+      - "127.0.0.1:8020:8000"  # reachable only from this computer
+
   # Availability monitoring of the demo stand: http://localhost:3001
   uptime-kuma:
     image: louislam/uptime-kuma:1
