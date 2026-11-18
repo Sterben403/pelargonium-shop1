@@ -116,6 +116,11 @@ jobs:
           docker network create shop
           docker run -d --name db --network shop \
             -e POSTGRES_USER=shop -e POSTGRES_PASSWORD=shop -e POSTGRES_DB=shop postgres:16-alpine
+          # start the app only when PostgreSQL accepts connections (the app also retries on its own)
+          for i in $(seq 1 30); do
+            docker exec db pg_isready -U shop -d shop -h 127.0.0.1 && break
+            sleep 1
+          done
           docker run -d --name app --network shop -p 8010:8000 \
             -e APP_ENV=production \
             -e DATABASE_URL=postgresql+psycopg://shop:shop@db:5432/shop \
