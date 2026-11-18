@@ -1,0 +1,24 @@
+# Render Blueprint: Dashboard → New → Blueprint → this repository.
+# The site (API, widget, owner workspace) runs from backend/Dockerfile; the database is Neon PostgreSQL.
+services:
+  - type: web
+    name: pelargonium-shop
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    # main only changes through pull requests with green checks (Ruleset), so every main commit is deployable
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL  # Neon connection string, entered when the Blueprint is created
+        sync: false
+      - key: ADMIN_PASSWORD  # owner password, entered when the Blueprint is created
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: TILDA_WEBHOOK_TOKEN
+        generateValue: true
