@@ -18,11 +18,12 @@ COPY app ./app
 RUN useradd --create-home shop && mkdir -p /app/uploads && chown shop /app/uploads
 USER shop
 
-ARG APP_VERSION=dev
+ARG APP_VERSION=""
 ENV APP_VERSION=${APP_VERSION} \
     UPLOAD_DIR=/app/uploads
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4)"
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+  CMD python -c "import os, urllib.request; urllib.request.urlopen(f\"http://127.0.0.1:{os.environ.get('PORT', '8000')}/api/health\", timeout=4)"
+# hosting platforms (Render) set PORT; locally and in CI the default 8000 is used
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
