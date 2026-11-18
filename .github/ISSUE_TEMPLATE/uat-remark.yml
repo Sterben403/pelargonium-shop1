@@ -1,0 +1,36 @@
+name: Замечание UAT
+description: Замечание заказчика во время приёмочного тестирования
+title: "[UAT] "
+labels: ["uat"]
+body:
+  - type: dropdown
+    id: scenario
+    attributes:
+      label: Сценарий
+      options: [UAT-01, UAT-02, UAT-03, UAT-04, UAT-05, UAT-06, UAT-07, UAT-08, другое]
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Тип замечания
+      options:
+        - Дефект — расхождение с согласованным критерием
+        - Уточнение требования
+        - Запрос на изменение (новая функция)
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Приоритет (решает заказчик и PM)
+      options: [P1 — критический, P2 — высокий, P3 — средний, P4 — низкий]
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Что произошло и что ожидалось
+      placeholder: Шаги, фактический результат, ожидаемый результат
+    validations:
+      required: true
