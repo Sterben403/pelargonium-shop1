@@ -1,0 +1,61 @@
+name: Load test
+
+# After every release (and on demand): 50 simulated buyers for 60 seconds against the production image.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  load:
+    name: Load test (Locust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Start the service like production
+        run: |
+          docker build -t shop backend
+          docker network create shop
+          docker run -d --name db --network shop \
+            -e POSTGRES_USER=shop -e POSTGRES_PASSWORD=shop -e POSTGRES_DB=shop postgres:16-alpine
+          docker run -d --name app --network shop -p 8010:8000 -e APP_ENV=production \
+            -e DATABASE_URL=postgresql+psycopg://shop:shop@db:5432/shop \
+            -e ADMIN_PASSWORD=load-admin -e SECRET_KEY="$(openssl rand -hex 32)" -e TILDA_WEBHOOK_TOKEN=load-token shop
+          for i in $(seq 1 60); do curl -fs http://localhost:8010/api/health && break; sleep 1; done
+
+      - name: Run Locust (50 users, 60 s)
+        run: |
+          python -m pip install locust
+          mkdir -p dist
+          locust -f backend/loadtest/locustfile.py --headless -u 50 -r 10 -t 60s \
+            --host http://localhost:8010 --csv dist/load --html dist/load.html --only-summary
+
+      - name: Check targets (p95 < 800 ms, no errors)
+        run: |
+          python - <<'EOF'
+          import csv, os
+          row = next(r for r in csv.DictReader(open("dist/load_stats.csv")) if r["Name"] == "Aggregated")
+          p95, fails, total = int(row["95%"]), int(row["Failure Count"]), int(row["Request Count"])
+          line = f"| {total} | {fails} | {row['50%']} ms | {p95} ms | {float(row['Requests/s']):.1f} |"
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+              fh.write("## Load test: 50 users, 60 s\n\n| Requests | Errors | Median | p95 | RPS |\n"
+                       "| --- | --- | --- | --- | --- |\n" + line + "\n")
+          print(line)
+          assert fails == 0, f"{fails} failed requests"
+          assert p95 < 800, f"p95 {p95} ms is above 800 ms"
+          EOF
+
+      - name: Publish load report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: load-test-report
+          path: dist/load*
