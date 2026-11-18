@@ -1,5 +1,8 @@
-name: CI and DORA
+name: CI and release
 
+# Every pull request is checked; every merge to main is released to production
+# (GitHub Release + image in GitHub Packages) and recorded as a GitHub Deployment,
+# which is where the DORA dashboard takes its data from.
 on:
   push:
     branches: [main]
@@ -11,15 +14,13 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Lint and tests
+  docs:
+    name: Docs and repository checks
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -32,63 +33,193 @@ jobs:
       - name: Run repository tests
         run: python -m pytest -q
 
+  backend:
+    name: Backend lint and tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: pelargonium
+          POSTGRES_PASSWORD: pelargonium
+          POSTGRES_DB: pelargonium_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U pelargonium"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt ruff
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Tests (pytest on PostgreSQL)
+        run: python -m pytest -q
+
   security:
-    name: Dependency and vulnerability scan
+    name: Secret and dependency scan
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # gitleaks checks the whole history
 
-      - name: Scan repository with Trivy
+      - name: Secrets in git history (gitleaks)
+        run: >-
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.21.2
+          detect --source /repo --config /repo/.gitleaks.toml --redact --verbose
+
+      - name: Vulnerable dependencies and secrets in files (Trivy)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
+          scanners: vuln,secret
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"
 
-  build:
-    name: Build and publish artifact
-    needs: [quality, security]
+  image:
+    name: Build and verify image
+    needs: backend
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build project archive
-        shell: bash
+      - name: Build image
+        run: docker build -t pelargonium-shop:${{ github.sha }} --build-arg APP_VERSION=${{ github.sha }} backend
+
+      - name: Scan image (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: pelargonium-shop:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Run the image like production
         run: |
-          mkdir -p dist
-          short_sha="${GITHUB_SHA:0:7}"
-          zip -r "dist/pelargonium-shop-${short_sha}.zip" README.md docs tests scripts .github/workflows/ci.yml -x "*/__pycache__/*" "*.pyc"
+          docker network create shop
+          docker run -d --name db --network shop \
+            -e POSTGRES_USER=shop -e POSTGRES_PASSWORD=shop -e POSTGRES_DB=shop postgres:16-alpine
+          docker run -d --name app --network shop -p 8010:8000 \
+            -e APP_ENV=production \
+            -e DATABASE_URL=postgresql+psycopg://shop:shop@db:5432/shop \
+            -e ADMIN_PASSWORD=ci-admin-password -e SECRET_KEY="$(openssl rand -hex 32)" \
+            -e TILDA_WEBHOOK_TOKEN=ci-tilda-token \
+            pelargonium-shop:${{ github.sha }}
 
-      - name: Publish project artifact
+      - name: Check the running version
+        run: |
+          for i in $(seq 1 30); do
+            body=$(curl -fsS http://localhost:8010/api/health) && break
+            sleep 2
+          done
+          echo "$body"
+          test "$(echo "$body" | jq -r .version)" = "${{ github.sha }}"
+          test "$(echo "$body" | jq -r .database)" = "ok"
+
+      - name: Smoke test the running service
+        run: |
+          python -m pip install pillow
+          python backend/scripts/smoke_test.py http://localhost:8010 ci-admin-password ci-tilda-token
+
+      - name: Service logs on failure
+        if: failure()
+        run: docker logs app
+
+      - name: Save image
+        run: docker save pelargonium-shop:${{ github.sha }} | gzip > pelargonium-shop-image.tar.gz
+
+      - name: Publish image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pelargonium-shop-build
-          path: dist/*.zip
+          name: pelargonium-shop-image
+          path: pelargonium-shop-image.tar.gz
+          retention-days: 7
           if-no-files-found: error
 
-  dora:
-    name: Build DORA dashboard
+  release:
+    name: Release to production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [docs, backend, security, image]
     runs-on: ubuntu-latest
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: ${{ steps.publish.outputs.url }}
+    permissions:
+      contents: write
+      packages: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: pelargonium-shop-image
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Load image
+        run: gunzip -c pelargonium-shop-image.tar.gz | docker load
+
+      - name: Push image to GitHub Packages
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag "pelargonium-shop:${GITHUB_SHA}" "$image:${GITHUB_SHA}"
+          docker tag "pelargonium-shop:${GITHUB_SHA}" "$image:latest"
+          docker push "$image:${GITHUB_SHA}"
+          docker push "$image:latest"
+
+      - name: Create GitHub Release
+        id: publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="v1.0.${{ github.run_number }}"
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "$tag" --generate-notes \
+            --notes "Image: ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
+          echo "url=${{ github.server_url }}/${{ github.repository }}/releases/tag/$tag" >> "$GITHUB_OUTPUT"
+
+  dora:
+    name: DORA dashboard
+    needs: release
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install dashboard dependency
         run: python -m pip install matplotlib
 
-      - name: Calculate DORA metrics from GitHub API
+      - name: Calculate DORA metrics from GitHub Deployments
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/dora_dashboard.py --output dist/dora_dashboard.png --json dist/dora_metrics.json
+        run: >-
+          python scripts/dora_dashboard.py --output dist/dora_dashboard.png
+          --json dist/dora_metrics.json --summary "$GITHUB_STEP_SUMMARY"
 
       - name: Publish DORA dashboard
         uses: actions/upload-artifact@v4
