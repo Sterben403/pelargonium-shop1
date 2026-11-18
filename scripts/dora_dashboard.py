@@ -22,11 +22,14 @@ import os
 import statistics
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ENVIRONMENT = "production"
 FINAL_STATES = {"success", "failure", "error"}
+MIN_DAYS = 7  # shorter history is not enough to talk about a weekly frequency
+MIN_RELEASES = 5  # fewer releases are not enough to classify lead time and failure rate
+NOT_ENOUGH = "not enough data"
 
 
 @dataclass
@@ -78,7 +81,8 @@ def describe_change(sha: str) -> tuple[str, datetime]:
         pr = pulls[0]
         commits = github_get_all(f"/pulls/{pr['number']}/commits")
         first = min(parse_time(c["commit"]["author"]["date"]) for c in commits)
-        return f"#{pr['number']} {pr['title']}", first
+        title = pr["title"]  # our titles already start with "#N"
+        return (title if title.startswith(f"#{pr['number']}") else f"#{pr['number']} {title}"), first
     commit = github_get(f"/commits/{sha}")["commit"]  # pushed to main without a PR
     return commit["message"].splitlines()[0], parse_time(commit["author"]["date"])
 
@@ -121,13 +125,14 @@ def level(metric: str, value: float | None) -> str:
 
 
 def calculate(releases: list[Release], now: datetime | None = None) -> dict:
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     successes = [r for r in releases if r.state == "success"]
     failures = [r for r in releases if r.state != "success"]
 
     if releases:
-        days = max(1.0, (now - releases[0].created_at).total_seconds() / 86400)
-        per_week = round(len(successes) / days * 7, 2)
+        days = (now - releases[0].created_at).total_seconds() / 86400
+        # a single day of history must not be stretched into "N per week": divide by at least one week
+        per_week = round(len(successes) / max(days, MIN_DAYS) * 7, 2)
     else:
         days, per_week = 0.0, None
 
@@ -145,6 +150,13 @@ def calculate(releases: list[Release], now: datetime | None = None) -> dict:
         "change_failure_rate_percent": round(len(failures) / len(releases) * 100, 1) if releases else None,
         "time_to_restore_hours": round(statistics.mean(restore_times), 2) if restore_times else None,
     }
+    # a level is only assigned when there is enough history to judge it
+    enough = {
+        "deployments_per_week": days >= MIN_DAYS,
+        "lead_time_hours": len(releases) >= MIN_RELEASES,
+        "change_failure_rate_percent": len(releases) >= MIN_RELEASES,
+        "time_to_restore_hours": len(restore_times) >= 1,
+    }
     return {
         "generated_at": now.isoformat(),
         "environment": ENVIRONMENT,
@@ -154,7 +166,7 @@ def calculate(releases: list[Release], now: datetime | None = None) -> dict:
         "failed": len(failures),
         "restored": len(restore_times),
         **metrics,
-        "levels": {name: level(name, value) for name, value in metrics.items()},
+        "levels": {name: (level(name, value) if enough[name] else NOT_ENOUGH) for name, value in metrics.items()},
         "releases": [
             {
                 "sha": r.sha[:7],
