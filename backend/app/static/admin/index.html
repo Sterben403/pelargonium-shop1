@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pelargonium Shop — кабинет владелицы</title>
+<style>
+:root{--g:#345e4a;--gs:#e6efe9;--p:#c4517a;--ps:#fbe9ef;--ink:#2b2a28;--mut:#77736c;--line:#ebe5dc;--bad:#b3261e;--warn:#a86b00}
+*{box-sizing:border-box}
+body{margin:0;background:#fbf8f4;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+header{background:#fff;border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;gap:16px;height:60px}
+.logo{font-weight:700;font-size:18px;color:var(--g);flex:1}
+.langs{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.langs button{border:0;background:none;padding:5px 10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mut)}.langs button.on{background:var(--g);color:#fff}
+.btn{border:0;border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:600;background:var(--g);color:#fff}.btn:hover{filter:brightness(1.08)}.btn:disabled{background:#c9c4bc;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--g);border:1px solid var(--g)}.btn.sm{padding:6px 10px;font-size:13px}.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
+h2{color:var(--g);margin:0 0 6px;font-size:26px}.sub{color:var(--mut);margin:0 0 16px}
+.login{max-width:380px;margin:60px auto}
+.f{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}.f label{font-size:13px;font-weight:600}
+.f input,.f select,.f textarea{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff}
+.bad input{border-color:var(--bad)}.err{color:var(--bad);font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:16px 0}.kpis b{font-size:24px;display:block}.meta{font-size:13px;color:var(--mut)}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}.tabs button{border:1px solid var(--line);background:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:600}.tabs button.on{background:var(--g);color:#fff;border-color:var(--g)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;cursor:pointer;font-size:13px}.chip.on{border-color:var(--g);background:var(--gs);color:var(--g);font-weight:600}
+.tw{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);background:#faf7f2}
+td input,td select,td textarea{border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;background:#fff}td textarea{min-height:64px}
+.st{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.st-new{background:#e3f0ff;color:#1d4f91}.st-confirmed{background:#fff4dc;color:var(--warn)}.st-ready{background:#f1e6ff;color:#6b2fa3}.st-done{background:var(--gs);color:var(--g)}.st-cancelled{background:#fde7e5;color:var(--bad)}
+.thumb{width:48px;height:48px;border-radius:8px;overflow:hidden;flex:none;background:linear-gradient(135deg,#fbe9ef,#e6efe9);display:grid;place-items:center}.thumb img{width:100%;height:100%;object-fit:cover}
+.photobtn{cursor:pointer;font-size:12px;color:var(--g);text-decoration:underline;display:inline-block;margin-top:4px}
+.addgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--line);border-radius:12px;min-height:220px;cursor:pointer;color:var(--mut);text-align:center;padding:10px;overflow:hidden}.drop:hover{border-color:var(--g);color:var(--g)}.drop img{max-width:100%;max-height:200px;border-radius:8px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;z-index:80;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}.toast.show{opacity:1}
+[hidden]{display:none!important}
+@media (max-width:820px){.addgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="logo">🌸 Pelargonium Shop</div>
+  <div class="langs" id="langs"><button data-l="ru">RU</button><button data-l="kk">KZ</button><button data-l="en">EN</button></div>
+  <button class="btn ghost sm" id="logoutBtn" hidden data-i="logout"></button></div></header>
+
+<main class="wrap" style="padding-top:24px;padding-bottom:40px">
+  <form id="login" class="box login" novalidate>
+    <h2 data-i="adminLogin"></h2><p class="sub" data-i="adminLoginSub"></p>
+    <div class="f" id="pwF"><label data-i="password"></label><input type="password" id="pw" autocomplete="current-password"><span class="err" id="pwErr"></span></div>
+    <button class="btn" style="width:100%" data-i="login"></button>
+  </form>
+
+  <div id="panel" hidden>
+    <h2 data-i="adminTitle"></h2>
+    <div class="kpis" id="kpis"></div>
+    <div class="tabs" id="tabs">
+      <button data-tab="orders" class="on" data-i="tabOrders"></button>
+      <button data-tab="items" data-i="tabItems"></button>
+      <button data-tab="guide" data-i="tabGuide"></button>
+    </div>
+
+    <section id="tab-orders">
+      <div class="chips"><span data-i="statusFilter"></span><span id="oFilter" class="chips" style="margin:0"></span></div>
+      <div class="tw"><table><thead><tr><th data-i="thNum"></th><th data-i="thDate"></th><th data-i="thClient"></th><th data-i="thItems"></th><th data-i="thDelivery"></th><th data-i="thSum"></th><th data-i="thStatus"></th></tr></thead>
+        <tbody id="ordersBody"></tbody></table></div>
+    </section>
+
+    <section id="tab-items" hidden>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <p class="sub" style="margin:0;flex:1 1 300px" data-i="itemsHint"></p>
+        <button class="btn" id="addBtn" data-i="addVariety"></button>
+      </div>
+      <form id="addForm" class="box" hidden novalidate style="margin-bottom:16px">
+        <h3 data-i="newVariety" style="margin:0 0 12px"></h3>
+        <div class="addgrid">
+          <div>
+            <div class="f" data-f="name"><label data-i="thVariety"></label><input name="name" placeholder="Pink Rambler"><span class="err"></span></div>
+            <div class="row2"><div class="f"><label data-i="type"></label><select name="type"></select></div><div class="f"><label data-i="color"></label><select name="color"></select></div></div>
+            <div class="row2"><div class="f" data-f="price"><label data-i="thPrice"></label><input name="price" type="number" min="1" step="100" value="2000"><span class="err"></span></div>
+              <div class="f"><label data-i="thStock"></label><input name="stock" type="number" min="0" value="1"></div></div>
+            <div class="f"><label>RU</label><textarea name="desc_ru" rows="2" data-ph="descPh"></textarea></div>
+            <div class="f"><label>KZ</label><textarea name="desc_kk" rows="2" data-ph="descOpt"></textarea></div>
+            <div class="f"><label>EN</label><textarea name="desc_en" rows="2" data-ph="descOpt"></textarea></div>
+          </div>
+          <div><label class="drop" for="newFile"><div id="preview" style="font-size:40px">📷</div><span data-i="uploadPhoto"></span></label>
+            <input type="file" id="newFile" accept="image/*" hidden></div>
+        </div>
+        <div class="err" id="addErr" style="margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn ghost" id="cancelAdd" data-i="cancel"></button><button class="btn" data-i="add"></button></div>
+      </form>
+      <div class="tw"><table><thead><tr><th data-i="thVariety"></th><th data-i="thPrice"></th><th data-i="thStock"></th><th data-i="thDesc"></th><th></th></tr></thead>
+        <tbody id="itemsBody"></tbody></table></div>
+    </section>
+
+    <section id="tab-guide" hidden class="box"><ol id="guideList" style="margin:0;padding-left:20px;line-height:1.9"></ol></section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script src="/static/admin/admin.js"></script>
+</body>
+</html>

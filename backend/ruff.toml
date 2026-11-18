@@ -1,0 +1,8 @@
+line-length = 120
+target-version = "py312"
+
+[lint]
+# pyflakes, pycodestyle, import order, bugbear, pyupgrade
+select = ["F", "E", "W", "I", "B", "UP"]
+# FastAPI dependencies are declared as default arguments
+ignore = ["B008"]

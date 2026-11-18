@@ -14,6 +14,17 @@
 
 Адаптивная модель с управлением потоком по Kanban. Обоснование решения находится в [ADR-001](docs/adr/ADR-001-delivery-model.md).
 
+## Код
+
+| Папка | Что там |
+| --- | --- |
+| `backend/` | API на FastAPI + PostgreSQL: каталог, заказы, кабинет владелицы, приём заявок с форм Тильды |
+| `backend/app/static/widget/` | виджет каталога для блока T123 в Тильде |
+| `backend/app/static/admin/` | кабинет владелицы |
+| `mvp/` | первая версия — одна HTML-страница без сервера |
+
+Запуск и проверки — [docs/development.md](docs/development.md). Сборка страницы в Тильде — [TILDA.md](TILDA.md).
+
 ## Инженерная эффективность
 
 GitHub Actions проверяет Markdown, запускает автоматические тесты, выполняет сканирование Trivy, собирает ZIP-артефакт и формирует DORA-дашборд по реальной истории репозитория.
@@ -27,6 +38,8 @@ GitHub Actions проверяет Markdown, запускает автомати�
 - [Настройка GitHub Projects](docs/github-project-setup.md)
 - [Начальный бэклог](docs/initial-backlog.md)
 - [Релизный план и откат](docs/release-plan.md)
+- [Разработка и запуск](docs/development.md)
+- [Сайт в Тильде](TILDA.md)
 
 ## Команда
 

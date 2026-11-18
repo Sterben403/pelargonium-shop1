@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pelargonium Shop</title>
+<style>
+:root{
+  --bg:#fbf8f4; --surface:#ffffff; --ink:#2b2a28; --muted:#77736c; --line:#ebe5dc;
+  --green:#345e4a; --green-soft:#e6efe9; --pink:#c4517a; --pink-soft:#fbe9ef;
+  --danger:#b3261e; --warn:#a86b00; --radius:14px; --shadow:0 2px 10px rgba(40,30,20,.06);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+a{color:var(--green)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{position:sticky;top:0;z-index:20;background:rgba(251,248,244,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:16px;height:64px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;color:var(--green);text-decoration:none;white-space:nowrap}
+nav{display:flex;gap:4px;flex:1;overflow-x:auto}
+nav a{padding:6px 10px;border-radius:8px;text-decoration:none;color:var(--ink);white-space:nowrap}
+nav a:hover{background:var(--green-soft)}
+.langs{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.langs button{border:0;background:none;padding:5px 10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
+.langs button.on{background:var(--green);color:#fff}
+.btn{border:0;border-radius:10px;padding:10px 16px;cursor:pointer;font-weight:600;background:var(--green);color:#fff}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{background:#c9c4bc;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--green);border:1px solid var(--green)}
+.btn.small{padding:6px 10px;font-size:13px}
+.cartbtn{position:relative;white-space:nowrap}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--pink);color:#fff;border-radius:999px;font-size:11px;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center;padding-top:48px;padding-bottom:32px}
+.hero h1{font-size:40px;line-height:1.1;margin:0 0 12px;color:var(--green)}
+.hero p{color:var(--muted);font-size:17px;margin:0 0 20px;max-width:560px}
+.hero .art{background:var(--pink-soft);border-radius:24px;aspect-ratio:4/3;overflow:hidden}
+.hero .art svg{width:100%;height:100%}
+.facts{display:flex;gap:24px;flex-wrap:wrap;margin-top:20px}
+.facts div{font-size:13px;color:var(--muted)} .facts b{display:block;font-size:20px;color:var(--ink)}
+section{padding:32px 0}
+h2{font-size:28px;margin:0 0 6px;color:var(--green)}
+.sub{color:var(--muted);margin:0 0 20px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:20px}
+.filters input[type=search],.filters select{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;min-width:0}
+.filters input[type=search]{flex:1 1 200px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
+.chip.on{border-color:var(--green);background:var(--green-soft);color:var(--green);font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.check{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;cursor:pointer;transition:transform .15s}
+.card:hover{transform:translateY(-2px)}
+.card .img{aspect-ratio:1/1;background:#f6f1ea;position:relative}
+.card .img svg,.card .img img{width:100%;height:100%;display:block;object-fit:cover}
+.hero .art img,.modal .img img,.line .thumb img,td .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.credit{font-size:11px;color:var(--muted)}
+.credit a{color:var(--muted)}
+.card.out .img{filter:grayscale(.7);opacity:.75}
+.tag{position:absolute;top:10px;left:10px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:#fff;color:var(--green)}
+.tag.no{background:var(--danger);color:#fff}
+.tag.few{background:#fff4dc;color:var(--warn)}
+.card .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.card h3{margin:0;font-size:16px}
+.meta{font-size:13px;color:var(--muted)}
+.price{font-weight:700;font-size:18px;margin-top:auto;display:flex;justify-content:space-between;align-items:center}
+.empty{padding:40px;text-align:center;color:var(--muted);background:var(--surface);border-radius:var(--radius);border:1px dashed var(--line)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.box h3{margin:0 0 6px;font-size:16px}
+.box p{margin:0;color:var(--muted);font-size:14px}
+.typecare summary{cursor:pointer;font-weight:600;padding:10px 0}
+.typecare details{border-bottom:1px solid var(--line)}
+.typecare details p{margin:0 0 12px;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:13px;margin-top:24px}
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(30,25,20,.45);z-index:50;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:18px;max-width:880px;width:100%;max-height:92vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr;position:relative}
+.modal .img{background:#f6f1ea;min-height:420px}
+.modal .img svg{width:100%;height:100%;display:block}
+.modal .info{padding:24px;display:flex;flex-direction:column;gap:10px}
+.modal h2{font-size:24px}
+.close{position:absolute;top:10px;right:10px;border:0;background:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:20px;box-shadow:var(--shadow);z-index:2}
+.qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;width:max-content}
+.qty button{border:0;background:none;width:34px;height:34px;cursor:pointer;font-size:18px}
+.qty span{min-width:28px;text-align:center;font-weight:600}
+.care{background:var(--green-soft);border-radius:12px;padding:12px 14px;font-size:14px}
+.care b{color:var(--green)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);z-index:60;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
+.drawer.open{transform:none}
+.drawer header{position:static;display:flex;justify-content:space-between;align-items:center;padding:16px;background:none}
+.drawer header h2{font-size:20px;margin:0}
+.drawer .content{padding:0 16px 16px;overflow:auto;flex:1}
+.line{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.line .thumb{width:56px;height:56px;border-radius:10px;overflow:hidden;background:#f6f1ea}
+.line .thumb svg{width:100%;height:100%}
+.line .rm{border:0;background:none;color:var(--danger);cursor:pointer;font-size:13px;padding:0}
+.total{display:flex;justify-content:space-between;font-weight:700;font-size:18px;padding:14px 0}
+form .f{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+form label{font-size:13px;font-weight:600}
+form input,form textarea,form select{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff}
+form .bad input,form .bad textarea{border-color:var(--danger)}
+.err{color:var(--danger);font-size:12px;min-height:0}
+.radio{display:flex;gap:8px}
+.radio label{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;font-weight:500;display:flex;gap:8px;align-items:flex-start}
+.radio label.on{border-color:var(--green);background:var(--green-soft)}
+.hint{font-size:12px;color:var(--muted)}
+.success{text-align:center;padding:30px 10px}
+.success .num{font-size:28px;font-weight:800;color:var(--green);margin:8px 0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;z-index:80;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+/* admin */
+#admin{display:none}
+body.admin-mode #shop{display:none}
+body.admin-mode #admin{display:block}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+.tabs button.on{background:var(--green);color:#fff;border-color:var(--green)}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:#faf7f2}
+td input,td select,td textarea{border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;background:#fff}
+td textarea{min-height:60px}
+.st{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.st-new{background:#e3f0ff;color:#1d4f91}.st-confirmed{background:#fff4dc;color:var(--warn)}.st-ready{background:#f1e6ff;color:#6b2fa3}.st-done{background:var(--green-soft);color:var(--green)}.st-cancelled{background:#fde7e5;color:var(--danger)}
+.login{max-width:380px;margin:40px auto}
+.addgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photodrop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--line);border-radius:12px;min-height:220px;cursor:pointer;color:var(--muted);text-align:center;padding:10px;overflow:hidden}
+.photodrop:hover{border-color:var(--green);color:var(--green)}
+.photodrop img{max-width:100%;max-height:200px;border-radius:8px;object-fit:cover}
+.photobtn{cursor:pointer;font-size:12px;color:var(--green);text-decoration:underline;display:inline-block;margin-top:4px}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.newtag{font-size:11px;background:var(--pink-soft);color:var(--pink);padding:1px 6px;border-radius:999px;margin-left:4px}
+@media (max-width:820px){.addgrid{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.kpis .box b{font-size:24px;display:block}
+@media (max-width:820px){
+  .hero{grid-template-columns:1fr;padding-top:24px}
+  .hero .art{order:-1;aspect-ratio:16/9}
+  .hero h1{font-size:30px}
+  .modal{display:block}
+  .modal .img{min-height:0;height:300px}
+  .modal .img svg{height:auto;max-height:300px;margin:0 auto}
+  .bar{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:6px;gap:10px}
+  .logo{flex:1;font-size:16px}
+  nav{order:3;flex:0 0 100%;margin:0 -6px}
+  .langs,.cartbtn{flex:none}
+  .cartbtn{padding:8px 12px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="#top" onclick="exitAdmin()">
+      <svg width="28" height="28" viewBox="0 0 40 40"><g fill="#c4517a"><circle cx="20" cy="11" r="6"/><circle cx="28.5" cy="17" r="6"/><circle cx="25.5" cy="27" r="6"/><circle cx="14.5" cy="27" r="6"/><circle cx="11.5" cy="17" r="6"/></g><circle cx="20" cy="20" r="4" fill="#f7d16a"/></svg>
+      Pelargonium Shop
+    </a>
+    <nav>
+      <a href="#catalog" data-i="navCatalog" onclick="exitAdmin()"></a>
+      <a href="#care" data-i="navCare" onclick="exitAdmin()"></a>
+      <a href="#delivery" data-i="navDelivery" onclick="exitAdmin()"></a>
+      <a href="#" data-i="navAdmin" onclick="openAdmin();return false"></a>
+    </nav>
+    <div class="langs" id="langs">
+      <button data-l="ru">RU</button><button data-l="kk">KZ</button><button data-l="en">EN</button>
+    </div>
+    <button class="btn cartbtn" onclick="openCart()"><span data-i="cart"></span><span class="badge" id="cartCount">0</span></button>
+  </div>
+</header>
+
+<main id="top">
+<div id="shop">
+  <div class="wrap hero">
+    <div>
+      <h1 data-i="heroTitle"></h1>
+      <p data-i="heroText"></p>
+      <a class="btn" href="#catalog" data-i="heroCta" style="text-decoration:none;display:inline-block"></a>
+      <div class="facts">
+        <div><b id="factCount">0</b><span data-i="factVarieties"></span></div>
+        <div><b>1 200 – 5 000 ₸</b><span data-i="factPrice"></span></div>
+        <div><b data-i="factNoRegVal"></b><span data-i="factNoReg"></span></div>
+      </div>
+    </div>
+    <div class="art" id="heroArt"></div>
+  </div>
+
+  <section id="catalog"><div class="wrap">
+    <h2 data-i="catalogTitle"></h2>
+    <p class="sub" data-i="catalogSub"></p>
+    <div class="filters">
+      <input type="search" id="q" data-ph="search">
+      <select id="fType"></select>
+      <div class="chips" id="fColor"></div>
+      <label class="check"><input type="checkbox" id="fStock"> <span data-i="onlyInStock"></span></label>
+      <select id="fSort"></select>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div></section>
+
+  <section id="care"><div class="wrap">
+    <h2 data-i="careTitle"></h2>
+    <p class="sub" data-i="careSub"></p>
+    <div class="cols" id="careTips"></div>
+    <h3 style="margin:28px 0 4px" data-i="typesTitle"></h3>
+    <div class="typecare box" id="typeCare"></div>
+  </div></section>
+
+  <section id="delivery"><div class="wrap">
+    <h2 data-i="delTitle"></h2>
+    <p class="sub" data-i="delSub"></p>
+    <div class="cols">
+      <div class="box"><h3 data-i="pickup"></h3><p data-i="pickupText"></p></div>
+      <div class="box"><h3 data-i="courier"></h3><p data-i="courierText"></p></div>
+      <div class="box"><h3 data-i="payTitle"></h3><p data-i="payText"></p></div>
+    </div>
+  </div></section>
+
+</div>
+
+<div id="admin"><div class="wrap" style="padding-top:28px;padding-bottom:28px">
+  <div id="adminLogin" class="box login">
+    <h2 data-i="adminLogin"></h2>
+    <p class="sub" data-i="adminLoginSub"></p>
+    <form onsubmit="doLogin(event)">
+      <div class="f" id="pwF"><label data-i="password"></label><input type="password" id="pw" autocomplete="current-password"><span class="err" id="pwErr"></span></div>
+      <button class="btn" style="width:100%" data-i="login"></button>
+      <p class="hint" data-i="demoPw" style="margin-top:10px"></p>
+    </form>
+  </div>
+  <div id="adminPanel" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+      <h2 data-i="adminTitle" style="margin:0"></h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost small" onclick="resetDemo()" data-i="resetDemo"></button>
+        <button class="btn ghost small" onclick="logout()" data-i="logout"></button>
+      </div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="tabs">
+      <button data-tab="orders" class="on" data-i="tabOrders"></button>
+      <button data-tab="items" data-i="tabItems"></button>
+      <button data-tab="guide" data-i="tabGuide"></button>
+    </div>
+    <div id="tab-orders">
+      <div class="filters"><span data-i="statusFilter"></span><div class="chips" id="oFilter"></div></div>
+      <div class="tablewrap"><table><thead><tr>
+        <th data-i="thNum"></th><th data-i="thDate"></th><th data-i="thClient"></th><th data-i="thItems"></th><th data-i="thDelivery"></th><th data-i="thSum"></th><th data-i="thStatus"></th>
+      </tr></thead><tbody id="ordersBody"></tbody></table></div>
+    </div>
+    <div id="tab-items" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <p class="sub" data-i="itemsHint" style="margin:0;flex:1 1 300px"></p>
+        <button class="btn" onclick="toggleAddForm(true)" data-i="addVariety"></button>
+      </div>
+      <form id="addForm" class="box" style="display:none;margin-bottom:16px" onsubmit="addVariety(event)" novalidate>
+        <h3 data-i="newVariety" style="margin-bottom:12px"></h3>
+        <div class="addgrid">
+          <div>
+            <div class="f" id="nf-name"><label data-i="thVariety"></label><input id="nName" placeholder="Pink Rambler"><span class="err"></span></div>
+            <div class="row2">
+              <div class="f"><label data-i="type"></label><select id="nType"></select></div>
+              <div class="f"><label data-i="color"></label><select id="nColor"></select></div>
+            </div>
+            <div class="row2">
+              <div class="f" id="nf-price"><label data-i="thPrice"></label><input id="nPrice" type="number" min="0" step="100" value="2000"><span class="err"></span></div>
+              <div class="f"><label data-i="thStock"></label><input id="nStock" type="number" min="0" step="1" value="1"></div>
+            </div>
+            <div class="f"><label>RU</label><textarea id="nDescRu" rows="2" data-ph="descPh"></textarea></div>
+            <div class="f"><label>KZ</label><textarea id="nDescKk" rows="2" data-ph="descOpt"></textarea></div>
+            <div class="f"><label>EN</label><textarea id="nDescEn" rows="2" data-ph="descOpt"></textarea></div>
+          </div>
+          <div>
+            <label class="photodrop" for="nFile"><div id="nPreview"></div><span data-i="uploadPhoto"></span></label>
+            <input type="file" id="nFile" accept="image/*" hidden onchange="pickPhoto(this, 'new')">
+            <div class="f" style="margin-top:10px"><label data-i="orUrl"></label><input id="nUrl" type="url" placeholder="https://…" oninput="newPhoto=this.value.trim();showPreview()"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn ghost" onclick="toggleAddForm(false)" data-i="cancel"></button>
+          <button class="btn" data-i="add"></button>
+        </div>
+      </form>
+      <div class="tablewrap"><table><thead><tr>
+        <th data-i="thVariety"></th><th data-i="thPrice"></th><th data-i="thStock"></th><th data-i="thDesc"></th><th></th>
+      </tr></thead><tbody id="itemsBody"></tbody></table></div>
+    </div>
+    <div id="tab-guide" style="display:none" class="box"><ol id="guideList" style="margin:0;padding-left:20px;line-height:1.9"></ol></div>
+  </div>
+</div></div>
+</main>
+
+<footer><div class="wrap" data-i="footer"></div></footer>
+
+<!-- product modal -->
+<div class="overlay" id="pModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal"><button class="close" onclick="closeModal()" aria-label="close">×</button><div class="img" id="mImg"></div><div class="info" id="mInfo"></div></div>
+</div>
+
+<!-- cart drawer -->
+<div class="overlay" id="cartOverlay" onclick="closeCart()"></div>
+<aside class="drawer" id="drawer">
+  <header><h2 id="drawerTitle"></h2><button class="close" style="position:static" onclick="closeCart()">×</button></header>
+  <div class="content" id="drawerContent"></div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== DATA ===================== */
+const TYPES = ['zonal','rosebud','ivy','star','regal','angel'];
+const COLORS = {pink:'#ec8fb0', red:'#d9192c', white:'#ffffff', purple:'#9b59b6', salmon:'#f4876a'};
+const STATUSES = ['new','confirmed','ready','done','cancelled'];
+const ADMIN_PASSWORD = 'pelargonium2026'; // demo password for MVP; replace with real auth on launch
+
+const WM = 'https://thumb.wikimedia.org/wikipedia/commons/thumb/';
+const BASE_ITEMS = [
+ {id:'apple-blossom',name:'Apple Blossom Rosebud',type:'rosebud',color:'white',c1:'#fdf3f6',c2:'#e5638c',price:3500,stock:4,
+  img:'0/0d/2018-08-30_Pelargonium_zonale_%27Appleblosom_Rosebud%27.jpg',src:['YvoBentele','CC BY-SA 4.0','File:2018-08-30_Pelargonium_zonale_%27Appleblosom_Rosebud%27.jpg'],
+  desc:{ru:'Классика розобудных пеларгоний: плотные белые «розочки» с розовой каймой собраны в крупные шапки. Самый частый вопрос покупателей — «а есть ли похожие на розы?» Это именно тот сорт.',
+        kk:'Раушан тәрізді пеларгонийлердің классикасы: ақ түсті тығыз «раушандар» қызғылт жиегімен үлкен шоқтарға жиналған. Сатып алушылар жиі сұрайтын «раушанға ұқсас» сорт осы.',
+        en:'The classic rosebud pelargonium: tight white "mini roses" with a pink edge, gathered into large heads. If you are asking for "the one that looks like roses" — this is it.'}},
+ {id:'rosebud-supreme',name:'Rosebud Supreme',type:'rosebud',color:'red',c1:'#d8283c',c2:'#9e1d31',price:4000,stock:2,
+  img:'2/21/Pelargonium_%27Rosebud_supreme%27_%28Geraniaceae%29_flower.JPG',src:['Magnus Manske','CC BY-SA 3.0','File:Pelargonium_%27Rosebud_supreme%27_(Geraniaceae)_flower.JPG'],
+  desc:{ru:'Розобудная пеларгония с насыщенно-красными махровыми «розочками». Цветки долго не раскрываются полностью и держатся на кусте до двух недель.',
+        kk:'Қанық қызыл қатпарлы «раушандары» бар раушан тәрізді пеларгония. Гүлдері ұзақ уақыт толық ашылмайды және бұтада екі аптаға дейін тұрады.',
+        en:'A rosebud pelargonium with deep red, fully double "mini roses". The flowers stay half-closed for a long time and last up to two weeks on the plant.'}},
+ {id:'millfield-rose',name:'Millfield Rose',type:'ivy',color:'pink',c1:'#f6c6d4',c2:'#c24f78',price:2500,stock:0,
+  img:'6/67/Pelargonienausstellung_im_Geranienhaus_Nymphenburg_27.jpg',src:['Kritzolina','CC BY-SA 4.0','File:Pelargonienausstellung_im_Geranienhaus_Nymphenburg_27.jpg'],
+  desc:{ru:'Гибрид плющелистной и зональной пеларгонии: полуампельный куст с крупными нежно-розовыми махровыми соцветиями. Неприхотлив — хороший выбор для новичка.',
+        kk:'Шырмауықжапырақты және зоналды пеларгонияның гибриді: ірі нәзік қызғылт қатпарлы гүлшоғыры бар жартылай ампельді бұта. Талғампаз емес — жаңадан бастаушыға жақсы таңдау.',
+        en:'An ivy × zonal hybrid: a semi-trailing bush with large, soft pink double heads. Undemanding — a good pick for beginners.'}},
+ {id:'lord-bute',name:'Lord Bute',type:'regal',color:'red',c1:'#5e1028',c2:'#c2416c',price:5000,stock:1,
+  img:'e/ef/Pelargonienausstellung_im_Geranienhaus_Nymphenburg_24.jpg',src:['Kritzolina','CC BY-SA 4.0','File:Pelargonienausstellung_im_Geranienhaus_Nymphenburg_24.jpg'],
+  desc:{ru:'Королевская пеларгония с крупными бархатными цветками почти чёрно-бордового цвета и розовой каймой. Капризнее остальных — для цветения нужен прохладный период зимой.',
+        kk:'Қызғылт жиекті, қара-қызыл түсті ірі барқыт гүлдері бар корольдік пеларгония. Басқаларынан талғампаз — гүлдеу үшін қыста салқын кезең керек.',
+        en:'A regal pelargonium with large velvety flowers of near-black burgundy with a pink edge. Fussier than the rest — needs a cool winter rest to bloom.'}},
+ {id:'mrs-pollock',name:'Mrs Pollock',type:'zonal',color:'salmon',c1:'#f2603c',c2:'#c33f1f',price:2000,stock:3,
+  img:'9/9a/%28MHNT%29_Pelargonium_%27Mrs_Pollock%27_-_Tricolor-leaved.jpg',src:['Didier Descouens','CC BY-SA 4.0','File:(MHNT)_Pelargonium_%27Mrs_Pollock%27_-_Tricolor-leaved.jpg'],
+  desc:{ru:'Пестролистный викторианский сорт: листья с золотой каймой и бронзово-красной зоной, цветки оранжево-коралловые. Ценят прежде всего за яркую листву.',
+        kk:'Ала жапырақты виктория сорты: жапырақтары алтын жиекті, қола-қызыл аймақты, гүлдері қызғылт сары-маржан түсті. Ең алдымен ашық жапырағы үшін бағаланады.',
+        en:'A Victorian fancy-leaf variety: golden-edged leaves with a bronze-red zone and coral-orange flowers. Prized above all for its vivid foliage.'}},
+ {id:'silver-glitter',name:'Silver Glitter',type:'star',color:'white',c1:'#ffffff',c2:'#e48aa6',price:2000,stock:0,
+  img:'e/e0/Pelargonienausstellung_im_Geranienhaus_Nymphenburg_19.jpg',src:['Kritzolina','CC BY-SA 4.0','File:Pelargonienausstellung_im_Geranienhaus_Nymphenburg_19.jpg'],
+  desc:{ru:'Миниатюрная звёздчатая пеларгония: узкие белые лепестки с розовыми штрихами и пёстрые листья с серебристой каймой. Куст 15–20 см, занимает мало места.',
+        kk:'Миниатюралы жұлдызша пеларгония: қызғылт сызықтары бар жіңішке ақ күлтелер және күміс жиекті ала жапырақтар. Бұтасы 15–20 см, аз орын алады.',
+        en:'A miniature stellar pelargonium: narrow white petals with pink streaks and variegated, silver-edged leaves. A 15–20 cm bush that takes little space.'}},
+ {id:'robyn-hannah',name:'Robyn Hannah',type:'star',color:'red',c1:'#e8364a',c2:'#b11e33',price:1800,stock:5,
+  img:'2/2d/Tatton_Park_Flower_Show_2014_035.jpg',src:['Mike Peel','CC BY-SA 4.0','File:Tatton_Park_Flower_Show_2014_035.jpg'],
+  desc:{ru:'Звёздчатая пеларгония с яркими алыми соцветиями из заострённых лепестков. Цветёт обильно и хорошо ветвится даже без прищипки.',
+        kk:'Үшкір күлтелерден тұратын ашық ал қызыл гүлшоғыры бар жұлдызша пеларгония. Мол гүлдейді, шымшымай-ақ жақсы бұтақтанады.',
+        en:'A stellar pelargonium with bright scarlet heads of pointed petals. Flowers profusely and branches well even without pinching.'}},
+ {id:'rocky-mountain-white',name:'Rocky Mountain White',type:'zonal',color:'white',c1:'#ffffff',c2:'#e6dede',price:1200,stock:10,
+  img:'c/c1/Pelargonium_%27Rocky_Mountain_White%27.JPG',src:['Michael Goodyear','CC BY-SA 4.0','File:Pelargonium_%27Rocky_Mountain_White%27.JPG'],
+  desc:{ru:'Зональная пеларгония с чисто-белыми цветками и тёмной «зоной» на листе. Самый доступный сорт — отлично подходит, чтобы начать коллекцию.',
+        kk:'Таза ақ гүлдері және жапырағында қою «аймағы» бар зоналды пеларгония. Ең қолжетімді сорт — коллекцияны бастауға тамаша.',
+        en:'A zonal pelargonium with pure white flowers and a dark "zone" on each leaf. The most affordable variety — ideal to start a collection.'}},
+ {id:'americana-white-splash',name:'Americana White Splash',type:'zonal',color:'pink',c1:'#fde4ea',c2:'#e0405f',price:1500,stock:6,
+  img:'d/dc/Pelargonium_zonal_%27Americana_White_Splash%27_JRVdH_01.jpg',src:['Cephas','CC BY-SA 4.0','File:Pelargonium_zonal_%27Americana_White_Splash%27_JRVdH_01.jpg'],
+  desc:{ru:'Белые лепестки с розово-красным «мазком» в центре — каждое соцветие выглядит немного по-разному. Компактный, выносливый куст.',
+        kk:'Ортасында қызғылт-қызыл «жағындысы» бар ақ күлтелер — әр гүлшоғыр сәл өзгеше көрінеді. Ықшам, төзімді бұта.',
+        en:'White petals with a pink-red "splash" in the centre — every head looks a little different. A compact, hardy bush.'}},
+ {id:'angel-eyes-randy',name:'Angel Eyes Randy',type:'angel',color:'purple',c1:'#dca3ea',c2:'#86359c',price:2200,stock:6,
+  img:'3/38/Pelargonium_%27Angel_Eyes_Randy%27%2C_Jard%C3%ADn_Bot%C3%A1nico_de_M%C3%BAnich%2C_Alemania%2C_2013-05-04%2C_DD_01.jpg',src:['Diego Delso','CC BY-SA 3.0','File:Pelargonium_%27Angel_Eyes_Randy%27,_Jard%C3%ADn_Bot%C3%A1nico_de_M%C3%BAnich,_Alemania,_2013-05-04,_DD_01.jpg'],
+  desc:{ru:'Пеларгония-«ангел»: мелкие цветки как у анютиных глазок — бордово-фиолетовые лепестки со светлой каймой. Нетребовательна и цветёт всё лето.',
+        kk:'«Періште» пеларгониясы: ұсақ гүлдері шегіргүлге ұқсайды — ашық жиекті қызыл-күлгін күлтелер. Талғампаз емес, жаз бойы гүлдейді.',
+        en:'An "angel" pelargonium: small pansy-like flowers — burgundy-purple petals with a pale edge. Easy-going and flowers all summer.'}},
+ {id:'zonal-scarlet',name:'Scarlet Zonal',type:'zonal',color:'red',c1:'#d9192c',c2:'#a10f1f',price:1500,stock:8,
+  img:'1/16/Red_Garden_Geranium_%28Pelargonium_Zonale%29_on_May_10%2C_2023.jpg',src:['George E. Koronaios','CC BY-SA 2.0','File:Red_Garden_Geranium_(Pelargonium_Zonale)_on_May_10,_2023.jpg'],
+  desc:{ru:'Та самая «бабушкина герань» в лучшем исполнении: насыщенно-алые шапки, крепкий компактный куст, цветёт почти круглый год.',
+        kk:'Ең жақсы нұсқадағы «әже гераны»: қанық ал қызыл шоқтар, мықты ықшам бұта, жыл бойы дерлік гүлдейді.',
+        en:'The "grandma\'s geranium" at its best: deep scarlet heads, a sturdy compact bush, flowers almost all year round.'}},
+ {id:'zonal-salmon',name:'Salmon Zonal',type:'zonal',color:'salmon',c1:'#f6a08c',c2:'#dc6c58',price:1300,stock:7,
+  img:'f/f3/Pelargonium-1.jpg',src:['Carlos Delgado','CC BY-SA 3.0','File:Pelargonium-1.jpg'],
+  desc:{ru:'Зональная пеларгония с крупными простыми цветками лососево-розового цвета и светлым глазком. Неприхотлива, хорошо растёт и на подоконнике, и на балконе.',
+        kk:'Ашық көзшесі бар албырт-қызғылт ірі қарапайым гүлдері бар зоналды пеларгония. Талғампаз емес, терезе алдында да, балконда да жақсы өседі.',
+        en:'A zonal pelargonium with large single salmon-pink flowers and a pale eye. Undemanding, happy both on a windowsill and on a balcony.'}},
+ {id:'ivy-red',name:'Scarlet Ivy',type:'ivy',color:'red',c1:'#d9192c',c2:'#a10f1f',price:2500,stock:6,
+  img:'a/a1/Ivy_geranium_red.jpg',src:['Neltharion','CC BY-SA 4.0','File:Ivy_geranium_red.jpg'],
+  desc:{ru:'Плющелистная пеларгония с махровыми ярко-красными цветками и свисающими побегами. Идеальна для кашпо и балкона.',
+        kk:'Қатпарлы ашық қызыл гүлдері мен салбыраған өркендері бар шырмауықжапырақты пеларгония. Кашпо мен балконға өте қолайлы.',
+        en:'An ivy-leaf pelargonium with double bright red flowers on trailing stems. Perfect for hanging baskets and balconies.'}},
+ {id:'ivy-pink',name:'Pink Ivy',type:'ivy',color:'pink',c1:'#f08fb0',c2:'#c4517a',price:2500,stock:4,
+  img:'3/37/Pelargonium_Peltatum.JPG',src:['Stojanoski Slave - Silfiriel','CC BY-SA 3.0','File:Pelargonium_Peltatum.JPG'],
+  desc:{ru:'Розово-малиновые цветки с тёмными прожилками на верхних лепестках и глянцевые листья, похожие на плющ. Ампельная форма, побеги до 60 см.',
+        kk:'Жоғарғы күлтелерінде қою тамырлары бар қызғылт-таңқурай гүлдер және шырмауыққа ұқсас жылтыр жапырақтар. Ампельді түрі, өркендері 60 см-ге дейін.',
+        en:'Pink-raspberry flowers with dark veins on the upper petals and glossy, ivy-like leaves. Trailing habit with stems up to 60 cm.'}},
+ {id:'ivy-white',name:'White Ivy',type:'ivy',color:'white',c1:'#ffffff',c2:'#8a3a9e',price:3000,stock:3,
+  img:'2/28/Pelargonium_peltatum_flower1.jpg',src:['Hedwig Storch','CC BY-SA 3.0','File:Pelargonium_peltatum_flower1.jpg'],
+  desc:{ru:'Белые цветки с тонкими фиолетовыми прожилками на верхних лепестках. Нежная ампельная пеларгония для светлого балкона или подвесного кашпо.',
+        kk:'Жоғарғы күлтелерінде жіңішке күлгін тамырлары бар ақ гүлдер. Жарық балконға немесе ілмелі кашпоға арналған нәзік ампельді пеларгония.',
+        en:'White flowers with fine purple veins on the upper petals. A delicate trailing pelargonium for a bright balcony or hanging basket.'}}
+];
+
+/* ===================== I18N ===================== */
+const T = {
+ru:{navCatalog:'Каталог',navCare:'Уход',navDelivery:'Доставка',navAdmin:'Владелице',cart:'Корзина',
+ heroTitle:'Сортовые пеларгонии с домашнего подоконника',heroText:'Актуальные фото, цены и наличие в одном месте. Выберите сорт по цвету и форме цветка, оставьте заявку — продавец свяжется с вами и согласует получение.',heroCta:'Смотреть каталог',
+ factVarieties:'сортов в каталоге',factPrice:'цена укоренённого растения',factNoRegVal:'Без регистрации',factNoReg:'заказ за 1 минуту',
+ catalogTitle:'Каталог сортов',catalogSub:'Нажмите на карточку, чтобы увидеть описание и памятку по уходу.',search:'Поиск по названию сорта…',allTypes:'Все типы',onlyInStock:'Только в наличии',
+ sortDefault:'По умолчанию',sortPriceAsc:'Сначала дешевле',sortPriceDesc:'Сначала дороже',sortName:'По названию',
+ inStock:'В наличии',outStock:'Нет в наличии',few:'Осталось',pcs:'шт.',addToCart:'В корзину',more:'Подробнее',nothing:'Ничего не найдено. Попробуйте сбросить фильтры.',resetFilters:'Сбросить фильтры',
+ type:'Тип',color:'Цвет',price:'Цена',availability:'Наличие',careFor:'Уход за этим типом',photoBy:'Фото',quantity:'Количество',added:'Добавлено в корзину',maxStock:'Больше нет в наличии',
+ types:{zonal:'Зональная',rosebud:'Розобудная',tulip:'Тюльпановидная',ivy:'Плющелистная',star:'Звёздчатая',regal:'Королевская',angel:'Ангел'},
+ colors:{pink:'Розовая',red:'Красная',white:'Белая',purple:'Сиреневая',salmon:'Лососевая'},
+ typeDesc:{zonal:'Самый распространённый тип: округлые листья с тёмным кольцом-«зоной», шаровидные соцветия. Выносливые и неприхотливые.',rosebud:'Махровые цветки с множеством лепестков, похожие на миниатюрные бутоны роз. Самый популярный тип у покупателей.',tulip:'Лепестки не раскрываются полностью, и цветок напоминает маленький тюльпан. Редкая и необычная группа.',ivy:'Ампельные пеларгонии со свисающими побегами и гладкими листьями, как у плюща. Для кашпо и балконов.',star:'Узкие заострённые лепестки образуют «звёздочку», листья резные. Часто миниатюрные.',regal:'Самые крупные и яркие цветки, часто с пятнами и прожилками. Требуют прохладной зимовки.',angel:'Небольшие кусты с цветками, похожими на анютины глазки. Компактные и неприхотливые.'},
+ typeCare:{zonal:'Яркий свет, полив после подсыхания верхнего слоя почвы. Удаляйте отцветшие соцветия — так растение цветёт дольше.',rosebud:'Не опрыскивайте цветки: махровые бутоны от влаги загнивают. Нужен яркий рассеянный свет и хорошая вентиляция.',tulip:'Подкармливайте калийным удобрением раз в 2 недели в сезон. Не переносит переувлажнения — дренаж обязателен.',ivy:'Подвешенное кашпо, солнце или полутень. Летом полив чаще, чем у зональных, но без застоя воды. Прищипывайте побеги для густоты.',star:'Небольшой горшок (8–10 см), лёгкий грунт. Формируйте куст прищипкой молодых побегов.',regal:'Зимой 10–15 °C и умеренный полив 1–2 месяца — без этого бутоны не закладываются. Летом защищайте от дождя.',angel:'Хорошо растёт на подоконнике круглый год. Обрезка после цветения сохраняет компактную форму.'},
+ careTitle:'Памятка по уходу',careSub:'Короткие правила, которые продавец раньше объясняла каждому покупателю в переписке.',typesTitle:'Особенности каждого типа',
+ tips:[['☀️ Свет','Южное или восточное окно. Зимой при нехватке света — фитолампа 10–12 часов.'],['💧 Полив','Только когда верхние 1–2 см почвы сухие. Лучше недолить, чем перелить: корни легко загнивают.'],['🪴 Пересадка','Через 1–2 недели после покупки — в горшок на 1–2 см шире прежнего, с дренажом. Пеларгонии любят тесноту.'],['🌱 Подкормка','С марта по сентябрь раз в 2 недели удобрением для цветущих (больше калия, меньше азота).'],['❄️ Зима','Прохлада 12–16 °C и редкий полив. Весной обрежьте вытянувшиеся побеги.'],['🚚 После доставки','Дайте растению 2–3 дня привыкнуть в полутени, не пересаживайте сразу.']],
+ delTitle:'Получение и оплата',delSub:'Способ получения выбирается в форме заказа. Стоимость и время курьера согласуются по телефону.',pickup:'Самовывоз',pickupText:'Бесплатно. Адрес и удобное время продавец сообщает при подтверждении заказа.',courier:'Курьер',courierText:'Доставка по городу. Стоимость зависит от района и согласуется при звонке — автоматического расчёта тарифа пока нет.',payTitle:'Оплата',payText:'При получении — наличными или переводом. Онлайн-оплата картой в MVP не входит.',
+ 
+ cartTitle:'Корзина',cartEmpty:'Корзина пуста. Добавьте сорта из каталога.',total:'Итого',checkout:'Оформить заказ',back:'← Назад к корзине',orderTitle:'Оформление заказа',
+ name:'Имя',phone:'Телефон',delivery:'Способ получения',address:'Адрес доставки',comment:'Комментарий',commentPh:'Например: удобное время звонка',send:'Отправить заявку',
+ errName:'Укажите имя (минимум 2 буквы)',errPhone:'Введите номер в формате +7 7XX XXX XX XX',errAddress:'Укажите адрес для курьера',errStock:'Часть позиций закончилась — проверьте корзину',
+ successTitle:'Заявка принята!',successText:'Номер вашего заказа:',successNext:'Продавец позвонит вам, чтобы подтвердить наличие, способ и время получения.',continueShop:'Продолжить покупки',
+ adminLogin:'Вход для владелицы',adminLoginSub:'Административная часть защищена паролем, чтобы покупатели не могли менять данные.',password:'Пароль',login:'Войти',errPw:'Неверный пароль',demoPw:'Демо-пароль MVP: pelargonium2026',
+ adminTitle:'Рабочее место владелицы',logout:'Выйти',resetDemo:'Сбросить демо-данные',confirmReset:'Удалить все заказы и вернуть исходный каталог?',
+ tabOrders:'Заказы',tabItems:'Каталог',tabGuide:'Инструкция',statusFilter:'Статус:',all:'Все',
+ thNum:'№',thDate:'Дата',thClient:'Покупатель',thItems:'Состав',thDelivery:'Получение',thSum:'Сумма',thStatus:'Статус',thVariety:'Сорт',thPrice:'Цена, ₸',thStock:'Наличие, шт.',thDesc:'Описание (RU)',save:'Сохранить',saved:'Сохранено',
+ addVariety:'+ Добавить сорт',newVariety:'Новый сорт',uploadPhoto:'Нажмите, чтобы загрузить фото с компьютера или телефона',orUrl:'…или ссылка на фото',descPh:'Описание сорта на русском',descOpt:'Необязательно — если пусто, покажем русский текст',add:'Добавить в каталог',cancel:'Отмена',delete:'Удалить',changePhoto:'Сменить фото',newTag:'новый',errVarName:'Укажите название сорта',errDup:'Такой сорт уже есть в каталоге',errPrice:'Укажите цену больше 0',varietyAdded:'Сорт добавлен в каталог',deleted:'Сорт удалён из каталога',confirmDelete:'Удалить сорт «{name}» из каталога?',storageFull:'Не хватает места в браузере — выберите фото поменьше',badPhoto:'Не удалось прочитать фото',
+ itemsHint:'Меняйте цену, наличие, описание и фото — каталог обновится сразу. 0 шт. = «Нет в наличии».',noOrders:'Заказов пока нет. Оформите тестовый заказ в каталоге.',
+ statuses:{new:'Новый',confirmed:'Подтверждён',ready:'Готов к выдаче',done:'Выполнен',cancelled:'Отменён'},
+ kNew:'Новых заказов',kActive:'В работе',kRevenue:'Сумма выполненных',kOut:'Сортов нет в наличии',
+ guide:['Новые заявки появляются во вкладке «Заказы» со статусом «Новый».','Нажмите на телефон покупателя, чтобы позвонить и подтвердить детали.','После звонка смените статус на «Подтверждён», когда растение готово — «Готов к выдаче», после передачи — «Выполнен».','Если заказ отменён, выберите «Отменён» — растения автоматически вернутся в наличие.','Во вкладке «Каталог» обновляйте цену и количество укоренённых растений. Нажмите «Сохранить».','Если какого-то сорта не осталось, поставьте 0 — на сайте появится пометка «Нет в наличии».'],
+ footer:'© 2026 Pelargonium Shop · MVP · Учебный проект: Мурат Аяулым, Мурзаканов Еснур · Фото сортов — Wikimedia Commons (CC BY / CC BY-SA), авторы указаны в карточках'},
+
+kk:{navCatalog:'Каталог',navCare:'Күтім',navDelivery:'Жеткізу',navAdmin:'Иесіне',cart:'Себет',
+ heroTitle:'Үй терезесінен сортты пеларгониялар',heroText:'Өзекті суреттер, бағалар және қолда бары бір жерде. Сортты гүлдің түсі мен пішіні бойынша таңдаңыз, өтінім қалдырыңыз — сатушы сізбен байланысып, алу тәсілін келіседі.',heroCta:'Каталогты көру',
+ factVarieties:'каталогтағы сорт',factPrice:'тамырланған өсімдік бағасы',factNoRegVal:'Тіркеусіз',factNoReg:'1 минутта тапсырыс',
+ catalogTitle:'Сорттар каталогы',catalogSub:'Сипаттама мен күтім жадынамасын көру үшін карточканы басыңыз.',search:'Сорт атауы бойынша іздеу…',allTypes:'Барлық түрлері',onlyInStock:'Тек қолда барлары',
+ sortDefault:'Әдепкі',sortPriceAsc:'Алдымен арзаны',sortPriceDesc:'Алдымен қымбаты',sortName:'Атауы бойынша',
+ inStock:'Қолда бар',outStock:'Қолда жоқ',few:'Қалды',pcs:'дана',addToCart:'Себетке',more:'Толығырақ',nothing:'Ештеңе табылмады. Сүзгілерді тазалап көріңіз.',resetFilters:'Сүзгілерді тазалау',
+ type:'Түрі',color:'Түсі',price:'Бағасы',availability:'Қолда бары',careFor:'Осы түрге күтім',photoBy:'Фото',quantity:'Саны',added:'Себетке қосылды',maxStock:'Бұдан артық қолда жоқ',
+ types:{zonal:'Зоналды',rosebud:'Раушан тәрізді',tulip:'Қызғалдақ тәрізді',ivy:'Шырмауықжапырақты',star:'Жұлдызша',regal:'Корольдік',angel:'Періште'},
+ colors:{pink:'Қызғылт',red:'Қызыл',white:'Ақ',purple:'Күлгін',salmon:'Албырт'},
+ typeDesc:{zonal:'Ең кең тараған түрі: жапырақтары дөңгелек, қою сақиналы «аймағы» бар, гүлшоғыры шар тәрізді. Төзімді әрі талғампаз емес.',rosebud:'Көп күлтелі қатпарлы гүлдер, кішкентай раушан бүршіктеріне ұқсайды. Сатып алушылар арасында ең танымал түрі.',tulip:'Күлтелері толық ашылмайды, гүлі кішкентай қызғалдаққа ұқсайды. Сирек кездесетін ерекше топ.',ivy:'Салбыраған өркендері және шырмауық сияқты тегіс жапырақтары бар ампельді пеларгониялар. Кашпо мен балконға арналған.',star:'Жіңішке үшкір күлтелер «жұлдызша» құрайды, жапырақтары ойма. Көбіне миниатюралы.',regal:'Ең ірі әрі ашық гүлдер, көбіне дақтары мен тамырлары бар. Салқын қыстауды қажет етеді.',angel:'Шегіргүлге ұқсас гүлдері бар шағын бұталар. Ықшам әрі талғампаз емес.'},
+ typeCare:{zonal:'Жарық көп болсын, топырақтың үсті кепкеннен кейін суарыңыз. Гүлі түскен шоқтарды алып тастаңыз — сонда ұзағырақ гүлдейді.',rosebud:'Гүлдерін бүркімеңіз: қатпарлы бүршіктер ылғалдан шіриді. Ашық шашыранды жарық пен жақсы желдету қажет.',tulip:'Маусымда 2 аптада бір рет калийлі тыңайтқышпен қоректендіріңіз. Артық ылғалды көтермейді — дренаж міндетті.',ivy:'Ілмелі кашпо, күн немесе жартылай көлеңке. Жазда зоналдыға қарағанда жиірек суарыңыз, бірақ су тоқтамасын. Қалың болуы үшін өркендерін шымшыңыз.',star:'Шағын құмыра (8–10 см), жеңіл топырақ. Жас өркендерді шымшып, бұтаны қалыптастырыңыз.',regal:'Қыста 1–2 ай 10–15 °C және қалыпты суару — онсыз бүршік байламайды. Жазда жаңбырдан қорғаңыз.',angel:'Терезе алдында жыл бойы жақсы өседі. Гүлдегеннен кейін кесу ықшам пішінді сақтайды.'},
+ careTitle:'Күтім жадынамасы',careSub:'Сатушы бұрын әр сатып алушыға хат алмасуда түсіндіріп жүрген қысқа ережелер.',typesTitle:'Әр түрдің ерекшеліктері',
+ tips:[['☀️ Жарық','Оңтүстік немесе шығыс терезе. Қыста жарық жетпесе — 10–12 сағат фитошам.'],['💧 Суару','Топырақтың үстіңгі 1–2 см құрғағанда ғана. Артық құйғаннан гөрі аз құйған жақсы: тамыры оңай шіриді.'],['🪴 Отырғызу','Сатып алғаннан кейін 1–2 аптадан соң — бұрынғысынан 1–2 см кең, дренажы бар құмыраға. Пеларгониялар тығыздықты ұнатады.'],['🌱 Қоректендіру','Наурыздан қыркүйекке дейін 2 аптада бір рет гүлдейтін өсімдіктерге арналған тыңайтқышпен (калийі көп, азоты аз).'],['❄️ Қыс','12–16 °C салқын және сирек суару. Көктемде созылған өркендерді кесіңіз.'],['🚚 Жеткізгеннен кейін','Өсімдікке жартылай көлеңкеде 2–3 күн бейімделуге уақыт беріңіз, бірден отырғызбаңыз.']],
+ delTitle:'Алу және төлеу',delSub:'Алу тәсілі тапсырыс формасында таңдалады. Курьердің құны мен уақыты телефон арқылы келісіледі.',pickup:'Өзі алып кету',pickupText:'Тегін. Мекенжай мен ыңғайлы уақытты сатушы тапсырысты растаған кезде хабарлайды.',courier:'Курьер',courierText:'Қала бойынша жеткізу. Құны ауданға байланысты және қоңырау кезінде келісіледі — тарифті автоматты есептеу әзірге жоқ.',payTitle:'Төлем',payText:'Алған кезде — қолма-қол немесе аударыммен. Картамен онлайн төлеу MVP-ге кірмейді.',
+ 
+ cartTitle:'Себет',cartEmpty:'Себет бос. Каталогтан сорттар қосыңыз.',total:'Барлығы',checkout:'Тапсырыс беру',back:'← Себетке оралу',orderTitle:'Тапсырысты рәсімдеу',
+ name:'Аты',phone:'Телефон',delivery:'Алу тәсілі',address:'Жеткізу мекенжайы',comment:'Түсініктеме',commentPh:'Мысалы: қоңырау шалуға ыңғайлы уақыт',send:'Өтінім жіберу',
+ errName:'Атыңызды жазыңыз (кемінде 2 әріп)',errPhone:'Нөмірді +7 7XX XXX XX XX форматында енгізіңіз',errAddress:'Курьер үшін мекенжайды көрсетіңіз',errStock:'Кейбір позициялар таусылды — себетті тексеріңіз',
+ successTitle:'Өтінім қабылданды!',successText:'Тапсырысыңыздың нөмірі:',successNext:'Сатушы қолда барын, алу тәсілі мен уақытын растау үшін сізге қоңырау шалады.',continueShop:'Сатып алуды жалғастыру',
+ adminLogin:'Иесінің кіруі',adminLoginSub:'Сатып алушылар деректерді өзгерте алмауы үшін әкімшілік бөлім құпиясөзбен қорғалған.',password:'Құпиясөз',login:'Кіру',errPw:'Құпиясөз қате',demoPw:'MVP демо-құпиясөзі: pelargonium2026',
+ adminTitle:'Иесінің жұмыс орны',logout:'Шығу',resetDemo:'Демо-деректерді тазалау',confirmReset:'Барлық тапсырыстарды жойып, бастапқы каталогты қайтару керек пе?',
+ tabOrders:'Тапсырыстар',tabItems:'Каталог',tabGuide:'Нұсқаулық',statusFilter:'Мәртебе:',all:'Барлығы',
+ thNum:'№',thDate:'Күні',thClient:'Сатып алушы',thItems:'Құрамы',thDelivery:'Алу',thSum:'Сома',thStatus:'Мәртебе',thVariety:'Сорт',thPrice:'Бағасы, ₸',thStock:'Қолда, дана',thDesc:'Сипаттама (RU)',save:'Сақтау',saved:'Сақталды',
+ addVariety:'+ Сорт қосу',newVariety:'Жаңа сорт',uploadPhoto:'Компьютерден немесе телефоннан фото жүктеу үшін басыңыз',orUrl:'…немесе фото сілтемесі',descPh:'Сорттың орысша сипаттамасы',descOpt:'Міндетті емес — бос болса, орысша мәтін көрсетіледі',add:'Каталогқа қосу',cancel:'Болдырмау',delete:'Жою',changePhoto:'Фотоны ауыстыру',newTag:'жаңа',errVarName:'Сорт атауын көрсетіңіз',errDup:'Мұндай сорт каталогта бар',errPrice:'0-ден жоғары баға көрсетіңіз',varietyAdded:'Сорт каталогқа қосылды',deleted:'Сорт каталогтан жойылды',confirmDelete:'«{name}» сортын каталогтан жою керек пе?',storageFull:'Браузерде орын жетпейді — кішірек фото таңдаңыз',badPhoto:'Фотоны оқу мүмкін болмады',
+ itemsHint:'Бағаны, тамырланған өсімдіктер санын және сипаттаманы өзгертіңіз — каталог бірден жаңарады. 0 дана = «Қолда жоқ».',noOrders:'Әзірге тапсырыс жоқ. Каталогта сынақ тапсырысын рәсімдеңіз.',
+ statuses:{new:'Жаңа',confirmed:'Расталды',ready:'Беруге дайын',done:'Орындалды',cancelled:'Бас тартылды'},
+ kNew:'Жаңа тапсырыстар',kActive:'Жұмыста',kRevenue:'Орындалғандар сомасы',kOut:'Қолда жоқ сорттар',
+ guide:['Жаңа өтінімдер «Тапсырыстар» қойындысында «Жаңа» мәртебесімен пайда болады.','Мәліметтерді растау үшін сатып алушының телефонын басып, қоңырау шалыңыз.','Қоңыраудан кейін мәртебені «Расталды», өсімдік дайын болғанда — «Беруге дайын», бергеннен кейін — «Орындалды» деп өзгертіңіз.','Тапсырыстан бас тартылса, «Бас тартылды» таңдаңыз — өсімдіктер қолда барға автоматты түрде қайтады.','«Каталог» қойындысында бағаны және тамырланған өсімдіктер санын жаңартып, «Сақтау» басыңыз.','Қандай да бір сорт қалмаса, 0 қойыңыз — сайтта «Қолда жоқ» белгісі шығады.'],
+ footer:'© 2026 Pelargonium Shop · MVP · Оқу жобасы: Мұрат Аяулым, Мурзаканов Еснур · Сорт суреттері — Wikimedia Commons (CC BY / CC BY-SA), авторлары карточкаларда көрсетілген'},
+
+en:{navCatalog:'Catalog',navCare:'Care',navDelivery:'Delivery',navAdmin:'Owner',cart:'Cart',
+ heroTitle:'Collector pelargoniums from a home windowsill',heroText:'Up-to-date photos, prices and availability in one place. Pick a variety by flower colour and shape, leave a request — the seller will call you to arrange pickup or delivery.',heroCta:'Browse catalog',
+ factVarieties:'varieties in catalog',factPrice:'per rooted plant',factNoRegVal:'No sign-up',factNoReg:'order in 1 minute',
+ catalogTitle:'Variety catalog',catalogSub:'Tap a card to see the description and care guide.',search:'Search by variety name…',allTypes:'All types',onlyInStock:'In stock only',
+ sortDefault:'Default',sortPriceAsc:'Price: low to high',sortPriceDesc:'Price: high to low',sortName:'By name',
+ inStock:'In stock',outStock:'Out of stock',few:'Only',pcs:'pcs',addToCart:'Add to cart',more:'Details',nothing:'Nothing found. Try clearing the filters.',resetFilters:'Clear filters',
+ type:'Type',color:'Colour',price:'Price',availability:'Availability',careFor:'Care for this type',photoBy:'Photo',quantity:'Quantity',added:'Added to cart',maxStock:'No more in stock',
+ types:{zonal:'Zonal',rosebud:'Rosebud',tulip:'Tulip',ivy:'Ivy-leaf',star:'Stellar',regal:'Regal',angel:'Angel'},
+ colors:{pink:'Pink',red:'Red',white:'White',purple:'Lilac',salmon:'Salmon'},
+ typeDesc:{zonal:'The most common type: rounded leaves with a dark ring ("zone") and ball-shaped flower heads. Hardy and easy.',rosebud:'Fully double flowers with many petals that look like tiny rosebuds. The most popular type with buyers.',tulip:'Petals never open fully, so each flower resembles a little tulip. A rare and unusual group.',ivy:'Trailing pelargoniums with hanging stems and smooth, ivy-like leaves. For baskets and balconies.',star:'Narrow pointed petals form a "star"; leaves are deeply cut. Often miniature.',regal:'The largest and showiest flowers, often blotched and veined. Need a cool winter rest.',angel:'Small bushes with pansy-like flowers. Compact and easy-going.'},
+ typeCare:{zonal:'Bright light; water once the top layer of soil is dry. Remove spent heads to keep it flowering longer.',rosebud:'Do not mist the flowers: double buds rot from moisture. Needs bright diffused light and good airflow.',tulip:'Feed with a potassium-rich fertiliser every 2 weeks in season. Hates wet feet — drainage is a must.',ivy:'A hanging basket in sun or part shade. Water more often than zonals in summer, but never let water stand. Pinch stems for a fuller plant.',star:'A small pot (8–10 cm) and light soil. Shape the bush by pinching young shoots.',regal:'In winter keep at 10–15 °C with moderate watering for 1–2 months — otherwise no buds form. Shelter from rain in summer.',angel:'Happy on a windowsill all year. Trimming after flowering keeps it compact.'},
+ careTitle:'Care guide',careSub:'Short rules the seller used to explain to every buyer by message.',typesTitle:'What makes each type special',
+ tips:[['☀️ Light','A south- or east-facing window. In winter, add a grow light for 10–12 hours if light is short.'],['💧 Watering','Only when the top 1–2 cm of soil is dry. Under-watering beats over-watering: roots rot easily.'],['🪴 Repotting','1–2 weeks after purchase, into a pot 1–2 cm wider with drainage. Pelargoniums like a snug pot.'],['🌱 Feeding','March to September, every 2 weeks with a flowering-plant fertiliser (more potassium, less nitrogen).'],['❄️ Winter','Cool 12–16 °C and sparse watering. Cut back leggy stems in spring.'],['🚚 After delivery','Let the plant settle in part shade for 2–3 days; do not repot straight away.']],
+ delTitle:'Pickup and payment',delSub:'Choose how to receive your order in the order form. Courier cost and time are agreed by phone.',pickup:'Pickup',pickupText:'Free. The seller shares the address and a convenient time when confirming your order.',courier:'Courier',courierText:'Delivery within the city. The cost depends on the district and is agreed on the call — there is no automatic rate calculation yet.',payTitle:'Payment',payText:'On receipt — cash or bank transfer. Online card payment is not part of the MVP.',
+ 
+ cartTitle:'Cart',cartEmpty:'Your cart is empty. Add varieties from the catalog.',total:'Total',checkout:'Place order',back:'← Back to cart',orderTitle:'Checkout',
+ name:'Name',phone:'Phone',delivery:'Delivery method',address:'Delivery address',comment:'Comment',commentPh:'E.g. a convenient time to call',send:'Send request',
+ errName:'Enter your name (at least 2 letters)',errPhone:'Enter a number like +7 7XX XXX XX XX',errAddress:'Enter an address for the courier',errStock:'Some items have sold out — check your cart',
+ successTitle:'Request received!',successText:'Your order number:',successNext:'The seller will call you to confirm availability and how and when you receive it.',continueShop:'Continue shopping',
+ adminLogin:'Owner sign-in',adminLoginSub:'The admin area is password-protected so buyers cannot change the data.',password:'Password',login:'Sign in',errPw:'Wrong password',demoPw:'MVP demo password: pelargonium2026',
+ adminTitle:'Owner workspace',logout:'Sign out',resetDemo:'Reset demo data',confirmReset:'Delete all orders and restore the original catalog?',
+ tabOrders:'Orders',tabItems:'Catalog',tabGuide:'Manual',statusFilter:'Status:',all:'All',
+ thNum:'No.',thDate:'Date',thClient:'Customer',thItems:'Items',thDelivery:'Delivery',thSum:'Total',thStatus:'Status',thVariety:'Variety',thPrice:'Price, ₸',thStock:'Stock, pcs',thDesc:'Description (RU)',save:'Save',saved:'Saved',
+ addVariety:'+ Add variety',newVariety:'New variety',uploadPhoto:'Click to upload a photo from your computer or phone',orUrl:'…or a photo link',descPh:'Variety description in Russian',descOpt:'Optional — if empty, the Russian text is shown',add:'Add to catalog',cancel:'Cancel',delete:'Delete',changePhoto:'Change photo',newTag:'new',errVarName:'Enter the variety name',errDup:'This variety is already in the catalog',errPrice:'Enter a price above 0',varietyAdded:'Variety added to the catalog',deleted:'Variety removed from the catalog',confirmDelete:'Remove "{name}" from the catalog?',storageFull:'Not enough browser storage — choose a smaller photo',badPhoto:'Could not read the photo',
+ itemsHint:'Change the price, number of rooted plants and description — the catalog updates instantly. 0 pcs = "Out of stock".',noOrders:'No orders yet. Place a test order from the catalog.',
+ statuses:{new:'New',confirmed:'Confirmed',ready:'Ready for pickup',done:'Completed',cancelled:'Cancelled'},
+ kNew:'New orders',kActive:'In progress',kRevenue:'Completed total',kOut:'Varieties out of stock',
+ guide:['New requests appear in the "Orders" tab with the status "New".','Tap the customer\'s phone number to call and confirm the details.','After the call set the status to "Confirmed", when the plant is ready — "Ready for pickup", after hand-over — "Completed".','If an order is cancelled, choose "Cancelled" — the plants go back into stock automatically.','In the "Catalog" tab update the price and number of rooted plants, then press "Save".','If a variety has run out, set it to 0 — the site shows "Out of stock".'],
+ footer:'© 2026 Pelargonium Shop · MVP · Student project: Murat Ayaulym, Murzakanov Yesnur · Variety photos — Wikimedia Commons (CC BY / CC BY-SA), authors credited on each card'}
+};
+
+/* ===================== STORAGE ===================== */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('ps_'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('ps_'+k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+};
+let lang = store.get('lang', 'ru');
+let edits = store.get('edits', {});      // {id:{price,stock,descRu,photo,hidden}}
+let custom = store.get('custom', []);    // varieties added by the owner
+let orders = store.get('orders', []);
+let cart = store.get('cart', {});        // {id:qty}
+let isAuthed = false;
+const state = {q:'', type:'', colors:new Set(), stock:false, sort:'default', oStatus:''};
+
+function items(){ return [...BASE_ITEMS, ...custom].filter(b => !(edits[b.id]||{}).hidden).map(b => { const e = edits[b.id] || {}; return {...b, photo:e.photo ?? b.photo, price:e.price ?? b.price, stock:e.stock ?? b.stock, desc:{...b.desc, ...(e.descRu!=null?{ru:e.descRu}:{})}}; }); }
+function item(id){ return items().find(i => i.id === id); }
+function t(k){ return T[lang][k] ?? T.ru[k] ?? k; }
+function money(n){ return n.toLocaleString('ru-RU').replace(/,/g,' ') + ' ₸'; }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg){ const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 1800); }
+
+/* ===================== FLOWER ILLUSTRATIONS ===================== */
+function flower(type, c1, c2, s){
+  let g = '';
+  if(type === 'rosebud'){
+    g = `<circle r="${11*s}" fill="${c1}" stroke="${c2}" stroke-width="${1.6*s}"/><circle r="${7.5*s}" fill="${c1}" stroke="${c2}" stroke-width="${1.3*s}" opacity=".95"/><circle r="${4*s}" fill="${c2}" opacity=".55"/>`;
+  } else if(type === 'tulip'){
+    g = `<path d="M${-8*s},${-2*s} Q${-9*s},${10*s} 0,${12*s} Q${9*s},${10*s} ${8*s},${-2*s} Q${5*s},${-12*s} ${2*s},${-4*s} L0,${-11*s} L${-2*s},${-4*s} Q${-5*s},${-12*s} ${-8*s},${-2*s}Z" fill="${c1}" stroke="${c2}" stroke-width="${1.2*s}"/><path d="M0,${-6*s} L0,${10*s}" stroke="${c2}" stroke-width="${s}" opacity=".6"/>`;
+  } else if(type === 'star'){
+    for(let i=0;i<5;i++) g += `<ellipse rx="${3*s}" ry="${11*s}" cy="${-9*s}" fill="${c1}" stroke="${c2}" stroke-width="${.8*s}" transform="rotate(${i*72})"/>`;
+    g += `<circle r="${2.8*s}" fill="#fff" opacity=".85"/>`;
+  } else if(type === 'regal' || type === 'angel'){
+    const big = type === 'regal' ? 1.15 : .85;
+    [[-35,1],[35,1],[-110,0],[110,0],[180,0]].forEach(([a,up]) => { g += `<ellipse rx="${7*s*big}" ry="${9*s*big}" cy="${-8*s*big}" fill="${up ? c1 : (type==='regal'?c2:c2)}" opacity="${up?1:.95}" transform="rotate(${a})"/>`; });
+    if(type === 'regal') [[-35],[35]].forEach(([a]) => g += `<ellipse rx="${3.5*s}" ry="${4*s}" cy="${-9*s}" fill="${c2}" transform="rotate(${a})"/>`);
+    if(type === 'angel') g = g.replace(/fill="([^"]+)" opacity="1"/g, `fill="${c2}" opacity="1"`).replace(new RegExp(`fill="${c2}" opacity="\\.95"`,'g'), `fill="${c1}" opacity=".95"`);
+    g += `<circle r="${2.5*s}" fill="#fff6d0"/>`;
+  } else { // zonal, ivy
+    const n = type === 'ivy' ? 5 : 5;
+    for(let i=0;i<n;i++){ const ry = type==='ivy' && (i===0) ? 10 : 8; g += `<ellipse rx="${6.5*s}" ry="${ry*s}" cy="${-7.5*s}" fill="${c1}" stroke="${c2}" stroke-width="${(type==='ivy'?1.6:.7)*s}" transform="rotate(${i*72})"/>`; }
+    g += `<circle r="${2.6*s}" fill="${type==='zonal' && c1 === '#ffffff' ? '#f2d36b' : '#fff6d0'}"/>`;
+  }
+  return g;
+}
+function leaf(type, x, y, r, rot, zoneColor){
+  if(type === 'ivy'){
+    return `<path transform="translate(${x},${y}) rotate(${rot})" d="M0,${r} L${-r*.9},${-r*.1} L${-r*.45},${-r*.25} L${-r*.5},${-r*.85} L0,${-r*.45} L${r*.5},${-r*.85} L${r*.45},${-r*.25} L${r*.9},${-r*.1}Z" fill="#4f8a3c" stroke="#3a6b2c" stroke-width="2" stroke-linejoin="round"/>`;
+  }
+  if(type === 'star'){
+    let p=''; for(let i=0;i<7;i++){ const a=(i/7)*Math.PI*2; p+=`<ellipse cx="${Math.cos(a)*r*.45}" cy="${Math.sin(a)*r*.45}" rx="${r*.55}" ry="${r*.22}" transform="rotate(${a*180/Math.PI} ${Math.cos(a)*r*.45} ${Math.sin(a)*r*.45})" fill="#5a9a46"/>`; }
+    return `<g transform="translate(${x},${y})">${p}<circle r="${r*.35}" fill="none" stroke="${zoneColor}" stroke-width="${r*.12}" opacity=".7"/></g>`;
+  }
+  const zone = (type === 'zonal' || type === 'angel') ? `<circle cx="${x}" cy="${y}" r="${r*.62}" fill="none" stroke="${zoneColor}" stroke-width="${r*.16}" opacity=".55"/>` : '';
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="${type==='regal'?'#4d7d3a':'#5c9a47'}" stroke="#467a36" stroke-width="2"/>${zone}<path d="M${x},${y} L${x},${y-r*.85} M${x},${y} L${x-r*.7},${y-r*.45} M${x},${y} L${x+r*.7},${y-r*.45}" stroke="#467a36" stroke-width="1.4" opacity=".6"/>`;
+}
+function plantSVG(it, opts={}){
+  const {type, c1, c2} = it;
+  const seed = [...it.id].reduce((a,c)=>a+c.charCodeAt(0),0);
+  const rnd = i => ((Math.sin(seed*9.7 + i*13.3)+1)/2);
+  const bg = opts.bg || '#f6f1ea';
+  const zone = it.id === 'mrs-pollock' ? '#b2401f' : '#5b3a22';
+  let leaves = '';
+  const L = type==='ivy' ? [[70,230,34,-30],[230,225,34,25],[110,265,30,10],[195,268,30,-12],[150,240,32,0]] : [[85,225,40,-20],[215,222,40,15],[150,250,42,0],[120,268,34,5],[185,270,34,-5]];
+  L.forEach(([x,y,r,rot]) => leaves += leaf(type,x,y,r,rot,zone));
+  if(it.id === 'mrs-pollock') leaves = leaves.replace(/fill="#5c9a47"/g, 'fill="#e2b63a"');
+  // stems & umbel
+  const heads = type==='ivy' ? [[110,120],[200,110]] : type==='regal' ? [[150,115]] : [[150,105]];
+  let stems = '', fl = '';
+  heads.forEach(([hx,hy],h) => {
+    stems += `<path d="M150,250 Q${(150+hx)/2+(h?10:-10)},${hy+80} ${hx},${hy+10}" stroke="#4a7d38" stroke-width="4" fill="none"/>`;
+    const n = type==='regal' ? 5 : type==='tulip' ? 7 : 9;
+    const R = type==='regal' ? 34 : heads.length>1 ? 30 : 42;
+    const s = type==='regal' ? 1.9 : type==='rosebud' ? 1.25 : heads.length>1 ? 1.05 : 1.3;
+    for(let i=0;i<n;i++){
+      const a = i/n*Math.PI*2 + rnd(i+h)*0.4;
+      const rr = i===0 ? 0 : R*(0.55+rnd(i*3+h)*0.45);
+      const x = hx + (i===0?0:Math.cos(a)*rr), y = hy + (i===0?0:Math.sin(a)*rr*0.8);
+      fl += `<g transform="translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${(rnd(i*7)*60).toFixed(0)})">${flower(type,c1,c2,s)}</g>`;
+    }
+  });
+  const pot = `<path d="M100,270 L200,270 L190,300 L110,300Z" fill="#c8794d"/><rect x="94" y="262" width="112" height="14" rx="4" fill="#b5653b"/>`;
+  return `<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(it.name)}"><rect width="300" height="300" fill="${bg}"/><circle cx="150" cy="140" r="120" fill="#fff" opacity=".55"/>${stems}${leaves}${fl}${pot}</svg>`;
+}
+
+function photoUrl(it, w){ return WM + it.img + '/' + w + 'px-' + it.img.split('/').pop(); }
+function plantImg(it, w=500){
+  if(it.photo) return `<img src="${esc(it.photo)}" alt="${esc(it.name)}" loading="lazy" onerror="this.outerHTML=plantSVG(item('${it.id}'))">`;
+  if(!it.img) return plantSVG(it);
+  return `<img src="${photoUrl(it,w)}" alt="${esc(it.name)}" loading="lazy" onerror="this.outerHTML=plantSVG(item('${it.id}'))">`;
+}
+function credit(it){
+  if(it.photo || !it.src) return '';
+  const [author, lic, file] = it.src;
+  return `<div class="credit">${t('photoBy')}: <a href="https://commons.wikimedia.org/wiki/${file}" target="_blank" rel="noopener">${esc(author)}</a>, ${lic}, Wikimedia Commons</div>`;
+}
+
+/* ===================== RENDER: STATIC TEXT ===================== */
+function applyI18n(){
+  document.documentElement.lang = lang === 'kk' ? 'kk' : lang;
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  document.querySelectorAll('[data-ph]').forEach(el => { el.placeholder = t(el.dataset.ph); });
+  document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.l === lang));
+  // type select
+  const fType = document.getElementById('fType');
+  fType.innerHTML = `<option value="">${t('allTypes')}</option>` + TYPES.map(k => `<option value="${k}">${t('types')[k]}</option>`).join('');
+  fType.value = state.type;
+  const fSort = document.getElementById('fSort');
+  fSort.innerHTML = [['default','sortDefault'],['asc','sortPriceAsc'],['desc','sortPriceDesc'],['name','sortName']].map(([v,k]) => `<option value="${v}">${t(k)}</option>`).join('');
+  fSort.value = state.sort;
+  // care
+  document.getElementById('careTips').innerHTML = t('tips').map(([h,p]) => `<div class="box"><h3>${h}</h3><p>${p}</p></div>`).join('');
+  document.getElementById('typeCare').innerHTML = TYPES.map(k => `<details><summary>${t('types')[k]}</summary><p>${t('typeDesc')[k]}</p><p><b>${t('careFor')}:</b> ${t('typeCare')[k]}</p></details>`).join('');
+  document.getElementById('guideList').innerHTML = t('guide').map(g => `<li>${g}</li>`).join('');
+  renderAll();
+}
+function renderAll(){
+  document.getElementById('factCount').textContent = items().length;
+  renderColors(); renderGrid(); renderCartCount();
+  if(document.getElementById('drawer').classList.contains('open')) renderCart();
+  if(isAuthed) renderAdmin();
+}
+
+/* ===================== CATALOG ===================== */
+function renderColors(){
+  document.getElementById('fColor').innerHTML = Object.entries(COLORS).map(([k,c]) =>
+    `<button class="chip ${state.colors.has(k)?'on':''}" onclick="toggleColor('${k}')"><span class="dot" style="background:${c}"></span>${t('colors')[k]}</button>`).join('');
+}
+function toggleColor(k){ state.colors.has(k) ? state.colors.delete(k) : state.colors.add(k); renderColors(); renderGrid(); }
+function filtered(){
+  let list = items().filter(i =>
+    (!state.q || i.name.toLowerCase().includes(state.q.toLowerCase())) &&
+    (!state.type || i.type === state.type) &&
+    (!state.colors.size || state.colors.has(i.color)) &&
+    (!state.stock || i.stock > 0));
+  if(state.sort === 'asc') list.sort((a,b) => a.price-b.price);
+  if(state.sort === 'desc') list.sort((a,b) => b.price-a.price);
+  if(state.sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
+  return list;
+}
+function stockTag(i){
+  if(i.stock <= 0) return `<span class="tag no">${t('outStock')}</span>`;
+  if(i.stock <= 2) return `<span class="tag few">${t('few')} ${i.stock} ${t('pcs')}</span>`;
+  return `<span class="tag">${t('inStock')}</span>`;
+}
+function renderGrid(){
+  const list = filtered(), g = document.getElementById('grid');
+  if(!list.length){ g.innerHTML = `<div class="empty" style="grid-column:1/-1">${t('nothing')}<br><br><button class="btn ghost small" onclick="resetFilters()">${t('resetFilters')}</button></div>`; return; }
+  g.innerHTML = list.map(i => `
+    <article class="card ${i.stock<=0?'out':''}" onclick="openModal('${i.id}')">
+      <div class="img">${plantImg(i,500)}${stockTag(i)}</div>
+      <div class="body">
+        <h3>${esc(i.name)}</h3>
+        <div class="meta">${t('types')[i.type]} · ${t('colors')[i.color]}</div>
+        <div class="price">${money(i.price)}
+          <button class="btn small" ${i.stock<=0?'disabled':''} onclick="event.stopPropagation();addToCart('${i.id}',1)">${t('addToCart')}</button></div>
+      </div>
+    </article>`).join('');
+}
+function resetFilters(){
+  state.q=''; state.type=''; state.colors.clear(); state.stock=false; state.sort='default';
+  document.getElementById('q').value=''; document.getElementById('fStock').checked=false; applyI18n();
+}
+
+/* ===================== MODAL ===================== */
+let modalQty = 1, modalId = null;
+function openModal(id){
+  modalId = id; modalQty = 1; renderModal();
+  document.getElementById('pModal').classList.add('open');
+}
+function renderModal(){
+  const i = item(modalId); if(!i) return;
+  document.getElementById('mImg').innerHTML = plantImg(i,960);
+  const avail = i.stock > 0 ? `<span style="color:var(--green);font-weight:600">${t('inStock')}: ${i.stock} ${t('pcs')}</span>` : `<span style="color:var(--danger);font-weight:600">${t('outStock')}</span>`;
+  document.getElementById('mInfo').innerHTML = `
+    <div class="meta">${t('types')[i.type]} · ${t('colors')[i.color]}</div>
+    <h2 style="margin:0">${esc(i.name)}</h2>
+    <div style="font-size:24px;font-weight:800">${money(i.price)}</div>
+    <div>${avail}</div>
+    <p style="margin:0">${esc(i.desc[lang] || i.desc.ru)}</p>
+    ${credit(i)}
+    <div class="care"><b>${t('types')[i.type]}.</b> ${t('typeDesc')[i.type]}<br><br><b>${t('careFor')}:</b> ${t('typeCare')[i.type]}</div>
+    ${i.stock>0 ? `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px">
+      <div class="qty"><button onclick="modalQty=Math.max(1,modalQty-1);renderModal()">−</button><span>${modalQty}</span><button onclick="modalQty=Math.min(${i.stock},modalQty+1);renderModal()">+</button></div>
+      <button class="btn" onclick="addToCart('${i.id}',modalQty);closeModal()">${t('addToCart')} · ${money(i.price*modalQty)}</button></div>` : ''}`;
+}
+function closeModal(){ document.getElementById('pModal').classList.remove('open'); modalId = null; }
+
+/* ===================== CART & ORDER ===================== */
+function cartCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
+function renderCartCount(){ document.getElementById('cartCount').textContent = cartCount(); }
+function saveCart(){ store.set('cart', cart); renderCartCount(); }
+function addToCart(id, n){
+  const i = item(id), have = cart[id] || 0;
+  if(have + n > i.stock){ toast(t('maxStock')); return; }
+  cart[id] = have + n; saveCart(); toast(t('added'));
+}
+function setQty(id, n){
+  const i = item(id);
+  if(n <= 0) delete cart[id]; else cart[id] = Math.min(n, i.stock);
+  saveCart(); renderCart();
+}
+let cartView = 'cart', lastOrder = null;
+function openCart(){ cartView = 'cart'; renderCart(); document.getElementById('drawer').classList.add('open'); document.getElementById('cartOverlay').classList.add('open'); }
+function closeCart(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('cartOverlay').classList.remove('open'); }
+function cartLines(){ return Object.entries(cart).map(([id,q]) => ({it:item(id), q})).filter(l => l.it); }
+function cartTotal(){ return cartLines().reduce((s,l) => s + l.it.price*l.q, 0); }
+function renderCart(){
+  const c = document.getElementById('drawerContent'), title = document.getElementById('drawerTitle');
+  if(cartView === 'success'){
+    title.textContent = t('successTitle');
+    c.innerHTML = `<div class="success"><div style="font-size:48px">🌸</div><p>${t('successText')}</p><div class="num">${lastOrder.id}</div><p class="hint">${t('successNext')}</p><br><button class="btn" onclick="closeCart()">${t('continueShop')}</button></div>`;
+    return;
+  }
+  const lines = cartLines();
+  if(cartView === 'cart'){
+    title.textContent = t('cartTitle');
+    if(!lines.length){ c.innerHTML = `<div class="empty">${t('cartEmpty')}</div>`; return; }
+    c.innerHTML = lines.map(({it,q}) => `
+      <div class="line"><div class="thumb">${plantImg(it,120)}</div>
+        <div><b>${esc(it.name)}</b><div class="meta">${money(it.price)}</div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:4px"><div class="qty"><button onclick="setQty('${it.id}',${q-1})">−</button><span>${q}</span><button onclick="setQty('${it.id}',${q+1})">+</button></div>
+          <button class="rm" onclick="setQty('${it.id}',0)">✕</button></div></div>
+        <b>${money(it.price*q)}</b></div>`).join('') +
+      `<div class="total"><span>${t('total')}</span><span>${money(cartTotal())}</span></div>
+       <button class="btn" style="width:100%" onclick="cartView='form';renderCart()">${t('checkout')}</button>`;
+    return;
+  }
+  // form
+  title.textContent = t('orderTitle');
+  const d = renderCart.draft || {name:'',phone:'',delivery:'pickup',address:'',comment:''};
+  c.innerHTML = `
+    <button class="rm" style="color:var(--green);margin-bottom:12px" onclick="saveDraft();cartView='cart';renderCart()">${t('back')}</button>
+    <div class="box" style="margin-bottom:14px;padding:12px">${lines.map(l => `<div style="display:flex;justify-content:space-between;font-size:14px"><span>${esc(l.it.name)} × ${l.q}</span><span>${money(l.it.price*l.q)}</span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:6px"><span>${t('total')}</span><span>${money(cartTotal())}</span></div></div>
+    <form id="orderForm" onsubmit="submitOrder(event)" novalidate>
+      <div class="f" id="f-name"><label for="oName">${t('name')} *</label><input id="oName" value="${esc(d.name)}" autocomplete="name"><span class="err"></span></div>
+      <div class="f" id="f-phone"><label for="oPhone">${t('phone')} *</label><input id="oPhone" type="tel" value="${esc(d.phone)}" placeholder="+7 7__ ___ __ __" autocomplete="tel"><span class="err"></span></div>
+      <div class="f"><label>${t('delivery')} *</label>
+        <div class="radio">
+          <label class="${d.delivery==='pickup'?'on':''}"><input type="radio" name="del" value="pickup" ${d.delivery==='pickup'?'checked':''} onchange="saveDraft();renderCart()"><span><b>${t('pickup')}</b><br><span class="hint">${t('pickupText')}</span></span></label>
+          <label class="${d.delivery==='courier'?'on':''}"><input type="radio" name="del" value="courier" ${d.delivery==='courier'?'checked':''} onchange="saveDraft();renderCart()"><span><b>${t('courier')}</b><br><span class="hint">${t('courierText')}</span></span></label>
+        </div></div>
+      ${d.delivery==='courier' ? `<div class="f" id="f-address"><label for="oAddress">${t('address')} *</label><input id="oAddress" value="${esc(d.address)}" autocomplete="street-address"><span class="err"></span></div>` : ''}
+      <div class="f"><label for="oComment">${t('comment')}</label><textarea id="oComment" rows="2" placeholder="${t('commentPh')}">${esc(d.comment)}</textarea></div>
+      <div class="err" id="f-general" style="margin-bottom:8px"></div>
+      <button class="btn" style="width:100%">${t('send')}</button>
+    </form>`;
+}
+function saveDraft(){
+  const v = id => (document.getElementById(id)||{}).value;
+  const del = document.querySelector('input[name=del]:checked');
+  renderCart.draft = {name:v('oName')||'', phone:v('oPhone')||'', delivery:del?del.value:'pickup', address:v('oAddress')||'', comment:v('oComment')||''};
+}
+function normPhone(p){
+  let d = p.replace(/\D/g,'');
+  if(d.length === 11 && (d[0] === '8' || d[0] === '7')) d = d.slice(1);
+  return d.length === 10 ? '+7' + d : null;
+}
+function fmtPhone(p){ return p.replace(/^\+7(\d{3})(\d{3})(\d{2})(\d{2})$/, '+7 $1 $2 $3 $4'); }
+function submitOrder(e){
+  e.preventDefault(); saveDraft();
+  const d = renderCart.draft; let ok = true;
+  const setErr = (id, msg) => { const f = document.getElementById(id); if(!f) return; f.classList.toggle('bad', !!msg); f.querySelector('.err').textContent = msg || ''; if(msg) ok = false; };
+  setErr('f-name', d.name.trim().length >= 2 ? '' : t('errName'));
+  const phone = normPhone(d.phone);
+  setErr('f-phone', phone ? '' : t('errPhone'));
+  if(d.delivery === 'courier') setErr('f-address', d.address.trim().length >= 5 ? '' : t('errAddress'));
+  const lines = cartLines();
+  const stockOk = lines.every(l => l.q <= l.it.stock);
+  document.getElementById('f-general').textContent = stockOk ? '' : t('errStock');
+  if(!ok || !stockOk || !lines.length) return;
+  // create order (one record), decrement stock
+  const seq = store.get('seq', 1000) + 1; store.set('seq', seq);
+  const order = {id:'PS-'+seq, date:new Date().toISOString(), name:d.name.trim(), phone, delivery:d.delivery, address:d.delivery==='courier'?d.address.trim():'', comment:d.comment.trim(),
+    items:lines.map(l => ({id:l.it.id, name:l.it.name, price:l.it.price, q:l.q})), total:cartTotal(), status:'new', lang};
+  lines.forEach(l => { edits[l.it.id] = {...(edits[l.it.id]||{}), stock:l.it.stock - l.q}; });
+  orders.unshift(order); store.set('orders', orders); store.set('edits', edits);
+  cart = {}; saveCart(); renderCart.draft = null; lastOrder = order; cartView = 'success';
+  renderCart(); renderGrid();
+}
+
+/* ===================== ADMIN ===================== */
+function openAdmin(){ document.body.classList.add('admin-mode'); window.scrollTo(0,0); showAdmin(); }
+function exitAdmin(){ document.body.classList.remove('admin-mode'); }
+function showAdmin(){
+  document.getElementById('adminLogin').style.display = isAuthed ? 'none' : '';
+  document.getElementById('adminPanel').style.display = isAuthed ? '' : 'none';
+  if(isAuthed) renderAdmin(); else setTimeout(() => document.getElementById('pw').focus(), 50);
+}
+function doLogin(e){
+  e.preventDefault();
+  const pw = document.getElementById('pw');
+  if(pw.value === ADMIN_PASSWORD){ isAuthed = true; try{ sessionStorage.setItem('ps_auth','1'); }catch(_){} pw.value=''; document.getElementById('pwErr').textContent=''; showAdmin(); }
+  else { document.getElementById('pwErr').textContent = t('errPw'); document.getElementById('pwF').classList.add('bad'); }
+}
+function logout(){ isAuthed = false; try{ sessionStorage.removeItem('ps_auth'); }catch(_){} showAdmin(); }
+function resetDemo(){
+  if(!confirm(t('confirmReset'))) return;
+  orders = []; edits = {}; custom = []; cart = {}; store.set('orders', orders); store.set('edits', edits); store.set('custom', custom); store.set('seq', 1000); saveCart(); renderAll();
+}
+function renderAdmin(){
+  const its = items();
+  const active = orders.filter(o => ['confirmed','ready'].includes(o.status)).length;
+  const revenue = orders.filter(o => o.status === 'done').reduce((s,o) => s+o.total, 0);
+  document.getElementById('kpis').innerHTML = [
+    [t('kNew'), orders.filter(o=>o.status==='new').length],[t('kActive'), active],[t('kRevenue'), money(revenue)],[t('kOut'), its.filter(i=>i.stock<=0).length]
+  ].map(([l,v]) => `<div class="box"><b>${v}</b><span class="meta">${l}</span></div>`).join('');
+  document.getElementById('oFilter').innerHTML = ['',...STATUSES].map(s => `<button class="chip ${state.oStatus===s?'on':''}" onclick="state.oStatus='${s}';renderAdmin()">${s ? t('statuses')[s] : t('all')} (${s ? orders.filter(o=>o.status===s).length : orders.length})</button>`).join('');
+  const list = orders.filter(o => !state.oStatus || o.status === state.oStatus);
+  document.getElementById('ordersBody').innerHTML = list.length ? list.map(o => `
+    <tr>
+      <td><b>${o.id}</b></td>
+      <td>${new Date(o.date).toLocaleString(lang==='en'?'en-GB':'ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${esc(o.name)}<br><a href="tel:${o.phone}">${fmtPhone(o.phone)}</a>${o.comment?`<div class="hint">💬 ${esc(o.comment)}</div>`:''}</td>
+      <td>${o.items.map(i => `${esc(i.name)} × ${i.q}`).join('<br>')}</td>
+      <td>${o.delivery==='courier' ? t('courier') + `<div class="hint">${esc(o.address)}</div>` : t('pickup')}</td>
+      <td style="white-space:nowrap">${money(o.total)}</td>
+      <td><span class="st st-${o.status}">${t('statuses')[o.status]}</span><br>
+        <select style="margin-top:6px" onchange="setStatus('${o.id}',this.value)">${STATUSES.map(s => `<option value="${s}" ${s===o.status?'selected':''}>${t('statuses')[s]}</option>`).join('')}</select></td>
+    </tr>`).join('') : `<tr><td colspan="7" class="meta" style="text-align:center;padding:30px">${t('noOrders')}</td></tr>`;
+  document.getElementById('itemsBody').innerHTML = its.map(i => `
+    <tr>
+      <td style="min-width:180px"><div style="display:flex;gap:10px;align-items:center"><div class="thumb" style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex:none">${plantImg(i,120)}</div><div><b>${esc(i.name)}</b>${i.custom?`<span class="newtag">${t('newTag')}</span>`:''}<div class="meta">${t('types')[i.type]}</div>
+        <label class="photobtn">📷 ${t('changePhoto')}<input type="file" accept="image/*" hidden onchange="pickPhoto(this,'${i.id}')"></label></div></div></td>
+      <td style="width:110px"><input type="number" min="0" step="100" id="p-${i.id}" value="${i.price}"></td>
+      <td style="width:100px"><input type="number" min="0" step="1" id="s-${i.id}" value="${i.stock}"></td>
+      <td style="min-width:260px"><textarea id="d-${i.id}">${esc(i.desc.ru)}</textarea></td>
+      <td style="white-space:nowrap"><button class="btn small" onclick="saveItem('${i.id}')">${t('save')}</button>
+        <button class="btn small danger" onclick="deleteItem('${i.id}')" title="${t('delete')}">✕</button></td>
+    </tr>`).join('');
+}
+function setStatus(id, s){
+  const o = orders.find(x => x.id === id); if(!o) return;
+  const wasCancelled = o.status === 'cancelled', nowCancelled = s === 'cancelled';
+  if(wasCancelled !== nowCancelled){ // return plants to stock on cancel, take them back on un-cancel
+    o.items.forEach(li => { const cur = item(li.id); if(cur) edits[li.id] = {...(edits[li.id]||{}), stock:Math.max(0, cur.stock + (nowCancelled ? li.q : -li.q))}; });
+    store.set('edits', edits);
+  }
+  o.status = s; store.set('orders', orders); renderAdmin(); renderGrid();
+}
+/* --- adding varieties & photos --- */
+let newPhoto = '';
+function toggleAddForm(show){
+  const f = document.getElementById('addForm');
+  f.style.display = show ? '' : 'none';
+  if(show){
+    document.getElementById('nType').innerHTML = TYPES.map(k => `<option value="${k}">${t('types')[k]}</option>`).join('');
+    document.getElementById('nColor').innerHTML = Object.keys(COLORS).map(k => `<option value="${k}">${t('colors')[k]}</option>`).join('');
+    showPreview(); document.getElementById('nName').focus();
+  } else { f.reset(); newPhoto = ''; f.querySelectorAll('.bad').forEach(x => x.classList.remove('bad')); f.querySelectorAll('.err').forEach(x => x.textContent=''); }
+}
+function showPreview(){
+  const p = document.getElementById('nPreview');
+  p.innerHTML = newPhoto ? `<img src="${esc(newPhoto)}" alt="" onerror="this.remove()">` : '<div style="font-size:40px">📷</div>';
+}
+// shrink to ≤800px JPEG so photos fit in browser storage
+function resizeImage(file){
+  return new Promise((ok, fail) => {
+    const r = new FileReader();
+    r.onerror = fail;
+    r.onload = () => { const im = new Image(); im.onerror = fail; im.onload = () => {
+      const k = Math.min(1, 800 / Math.max(im.width, im.height));
+      const c = document.createElement('canvas'); c.width = Math.round(im.width*k); c.height = Math.round(im.height*k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      ok(c.toDataURL('image/jpeg', 0.8));
+    }; im.src = r.result; };
+    r.readAsDataURL(file);
+  });
+}
+async function pickPhoto(input, target){
+  const file = input.files && input.files[0]; if(!file) return;
+  let data; try{ data = await resizeImage(file); }catch(e){ toast(t('badPhoto')); return; }
+  if(target === 'new'){ newPhoto = data; document.getElementById('nUrl').value=''; showPreview(); return; }
+  const prev = edits[target];
+  edits[target] = {...(edits[target]||{}), photo:data};
+  if(!store.set('edits', edits)){ edits[target] = prev; toast(t('storageFull')); return; }
+  toast(t('saved')); renderAdmin(); renderGrid();
+}
+function addVariety(e){
+  e.preventDefault();
+  const v = id => document.getElementById(id).value.trim();
+  const name = v('nName'), price = parseInt(v('nPrice'),10), stock = Math.max(0, parseInt(v('nStock'),10) || 0);
+  let ok = true;
+  const setErr = (id, msg) => { const f = document.getElementById(id); f.classList.toggle('bad', !!msg); f.querySelector('.err').textContent = msg || ''; if(msg) ok = false; };
+  const dup = items().some(i => i.name.toLowerCase() === name.toLowerCase());
+  setErr('nf-name', name.length < 2 ? t('errVarName') : dup ? t('errDup') : '');
+  setErr('nf-price', !(price > 0) ? t('errPrice') : '');
+  if(!ok) return;
+  const ru = v('nDescRu'), kk = v('nDescKk'), en = v('nDescEn');
+  const type = v('nType'), color = v('nColor');
+  const it = {id:'c-'+Date.now().toString(36), custom:true, name, type, color, c1:COLORS[color], c2:'#8a3a5e', price, stock,
+    photo:newPhoto || undefined, desc:{ru:ru || en || kk, kk:kk || ru || en, en:en || ru || kk}};
+  custom.push(it);
+  if(!store.set('custom', custom)){ custom.pop(); toast(t('storageFull')); return; }
+  toggleAddForm(false); toast(t('varietyAdded')); renderAll();
+}
+function deleteItem(id){
+  const i = item(id); if(!i || !confirm(t('confirmDelete').replace('{name}', i.name))) return;
+  if(i.custom){ custom = custom.filter(c => c.id !== id); store.set('custom', custom); }
+  else { edits[id] = {...(edits[id]||{}), hidden:true}; store.set('edits', edits); }
+  if(cart[id]){ delete cart[id]; saveCart(); }
+  toast(t('deleted')); renderAll();
+}
+function saveItem(id){
+  const price = Math.max(0, parseInt(document.getElementById('p-'+id).value,10) || 0);
+  const stock = Math.max(0, parseInt(document.getElementById('s-'+id).value,10) || 0);
+  const descRu = document.getElementById('d-'+id).value.trim();
+  edits[id] = {...(edits[id]||{}), price, stock, descRu}; store.set('edits', edits);
+  const c = custom.find(x => x.id === id); if(c){ c.desc.ru = descRu; store.set('custom', custom); }
+  if(cart[id] > stock){ if(stock) cart[id] = stock; else delete cart[id]; saveCart(); }
+  toast(t('saved')); renderAdmin(); renderGrid();
+}
+
+/* ===================== INIT ===================== */
+document.getElementById('langs').addEventListener('click', e => { const l = e.target.dataset.l; if(!l) return; if(document.getElementById('drawer').classList.contains('open') && cartView==='form') saveDraft(); lang = l; store.set('lang', l); applyI18n(); if(modalId) renderModal(); });
+document.getElementById('q').addEventListener('input', e => { state.q = e.target.value; renderGrid(); });
+document.getElementById('fType').addEventListener('change', e => { state.type = e.target.value; renderGrid(); });
+document.getElementById('fSort').addEventListener('change', e => { state.sort = e.target.value; renderGrid(); });
+document.getElementById('fStock').addEventListener('change', e => { state.stock = e.target.checked; renderGrid(); });
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['orders','items','guide'].forEach(k => document.getElementById('tab-'+k).style.display = k === b.dataset.tab ? '' : 'none');
+}));
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ closeModal(); closeCart(); } });
+try{ isAuthed = sessionStorage.getItem('ps_auth') === '1'; }catch(_){}
+document.getElementById('heroArt').innerHTML = plantImg(BASE_ITEMS[0], 960);
+applyI18n();
+if(location.hash === '#admin') openAdmin();
+</script>
+</body>
+</html>

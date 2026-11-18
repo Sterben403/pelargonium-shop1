@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Build a DORA dashboard from GitHub history and recorded manual releases."""
+"""DORA metrics from GitHub Deployments of the `production` environment.
+
+Every merge to main is released by the `Release to production` job, and GitHub records
+that job as a Deployment with a final status (success / failure). From these records:
+
+* Deployment Frequency  — successful production deployments per week;
+* Lead Time for Changes — per change: first commit of the pull request -> its deployment finished;
+* Change Failure Rate   — failed deployments / all finished deployments;
+* Time to Restore       — failed deployment -> next successful deployment.
+
+Nothing is entered by hand: if there is no data yet, the metric is reported as N/A.
+
+    GITHUB_TOKEN=... python scripts/dora_dashboard.py --output dist/dora_dashboard.png
+"""
 
 from __future__ import annotations
 
@@ -8,18 +21,28 @@ import json
 import os
 import statistics
 import urllib.request
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch
+ENVIRONMENT = "production"
+FINAL_STATES = {"success", "failure", "error"}
 
 
-DEFAULT_MANUAL_RELEASES = Path("docs/dora-manual-releases.json")
+@dataclass
+class Release:
+    sha: str
+    created_at: datetime
+    finished_at: datetime
+    state: str  # success | failure | error
+    change: str  # "#12 Title" or the commit subject
+    first_commit_at: datetime  # first commit of the change
 
+
+# ---------------------------------------------------------------- GitHub API
 
 def github_get(path: str):
-    repository = os.environ.get("GITHUB_REPOSITORY", "Wolfnor/pelargonium-shop")
+    repository = os.environ.get("GITHUB_REPOSITORY", "Sterben403/pelargonium-shop1")
     token = os.environ.get("GITHUB_TOKEN", "")
     request = urllib.request.Request(
         f"https://api.github.com/repos/{repository}{path}",
@@ -33,273 +56,214 @@ def github_get(path: str):
         return json.load(response)
 
 
+def github_get_all(path: str) -> list:
+    items, page = [], 1
+    separator = "&" if "?" in path else "?"
+    while True:
+        batch = github_get(f"{path}{separator}per_page=100&page={page}")
+        items.extend(batch)
+        if len(batch) < 100:
+            return items
+        page += 1
+
+
 def parse_time(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def load_manual_releases(path: Path) -> dict:
-    if not path.exists():
-        return {"manual_deployments": []}
-    return json.loads(path.read_text(encoding="utf-8"))
+def describe_change(sha: str) -> tuple[str, datetime]:
+    """The pull request that brought `sha` to main and the time of its first commit."""
+    pulls = github_get(f"/commits/{sha}/pulls")
+    if pulls:
+        pr = pulls[0]
+        commits = github_get_all(f"/pulls/{pr['number']}/commits")
+        first = min(parse_time(c["commit"]["author"]["date"]) for c in commits)
+        return f"#{pr['number']} {pr['title']}", first
+    commit = github_get(f"/commits/{sha}")["commit"]  # pushed to main without a PR
+    return commit["message"].splitlines()[0], parse_time(commit["author"]["date"])
 
 
-def collect_metrics(manual_path: Path = DEFAULT_MANUAL_RELEASES) -> dict:
-    commits = github_get("/commits?per_page=100")
-    deployments = github_get("/deployments?per_page=100")
-    manual_data = load_manual_releases(manual_path)
-    manual_deployments = manual_data.get("manual_deployments", [])
+def collect_releases() -> list[Release]:
+    releases = []
+    for deployment in github_get_all(f"/deployments?environment={ENVIRONMENT}"):
+        statuses = github_get(f"/deployments/{deployment['id']}/statuses")  # newest first
+        final = next((s for s in statuses if s["state"] in FINAL_STATES), None)
+        if not final:
+            continue  # still running
+        change, first_commit_at = describe_change(deployment["sha"])
+        releases.append(Release(
+            sha=deployment["sha"],
+            created_at=parse_time(deployment["created_at"]),
+            finished_at=parse_time(final["created_at"]),
+            state=final["state"],
+            change=change,
+            first_commit_at=first_commit_at,
+        ))
+    return sorted(releases, key=lambda r: r.finished_at)
 
-    commit_dates = [
-        parse_time(item["commit"]["committer"]["date"])
-        for item in commits
-        if item.get("commit", {}).get("committer", {}).get("date")
-    ]
 
-    window = manual_data.get("observation_window", {})
-    if window.get("start") and window.get("end"):
-        observation_days = max(
-            1,
-            (parse_time(window["end"]) - parse_time(window["start"])).days,
-        )
+# ---------------------------------------------------------------- metrics
+
+def level(metric: str, value: float | None) -> str:
+    """Rough DORA performance level (thresholds of the 2023 State of DevOps report)."""
+    if value is None:
+        return "N/A"
+    bands = {
+        # metric: (elite, high, medium) upper bounds; above medium -> Low
+        "lead_time_hours": (24, 24 * 7, 24 * 30),
+        "change_failure_rate_percent": (5, 10, 15),
+        "time_to_restore_hours": (1, 24, 24 * 7),
+    }
+    if metric == "deployments_per_week":  # higher is better
+        return "Elite" if value >= 7 else "High" if value >= 1 else "Medium" if value >= 0.25 else "Low"
+    elite, high, medium = bands[metric]
+    return "Elite" if value <= elite else "High" if value <= high else "Medium" if value <= medium else "Low"
+
+
+def calculate(releases: list[Release], now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
+    successes = [r for r in releases if r.state == "success"]
+    failures = [r for r in releases if r.state != "success"]
+
+    if releases:
+        days = max(1.0, (now - releases[0].created_at).total_seconds() / 86400)
+        per_week = round(len(successes) / days * 7, 2)
     else:
-        observation_days = max(
-            1,
-            (datetime.now(timezone.utc) - min(commit_dates)).days if commit_dates else 1,
-        )
+        days, per_week = 0.0, None
 
-    lead_times = []
-    failed_deployments = 0
-    recovery_times = []
+    lead_times = [(r.finished_at - r.first_commit_at).total_seconds() / 3600 for r in successes]
 
-    for deployment in deployments:
-        sha = deployment.get("sha")
-        created_at = deployment.get("created_at")
-        if sha and created_at:
-            commit = github_get(f"/commits/{sha}")
-            committed_at = commit.get("commit", {}).get("committer", {}).get("date")
-            if committed_at:
-                lead_times.append(
-                    (parse_time(created_at) - parse_time(committed_at)).total_seconds()
-                    / 3600
-                )
+    restore_times = []
+    for failed in failures:
+        recovered = next((r for r in successes if r.finished_at > failed.finished_at), None)
+        if recovered:
+            restore_times.append((recovered.finished_at - failed.finished_at).total_seconds() / 3600)
 
-        statuses = github_get(
-            f"/deployments/{deployment['id']}/statuses?per_page=100"
-        )
-        states = [status.get("state") for status in statuses]
-        if any(state in {"failure", "error"} for state in states):
-            failed_deployments += 1
-            failure_times = [
-                parse_time(status["created_at"])
-                for status in statuses
-                if status.get("state") in {"failure", "error"}
-                and status.get("created_at")
-            ]
-            success_times = [
-                parse_time(status["created_at"])
-                for status in statuses
-                if status.get("state") == "success" and status.get("created_at")
-            ]
-            if failure_times and success_times:
-                failure = min(failure_times)
-                later_successes = [value for value in success_times if value >= failure]
-                if later_successes:
-                    recovery_times.append(
-                        (min(later_successes) - failure).total_seconds() / 3600
-                    )
-
-    for deployment in manual_deployments:
-        status = deployment.get("status", "").lower()
-        if status in {"failure", "error"} or deployment.get("failed") is True:
-            failed_deployments += 1
-
-        started_at = deployment.get("started_at")
-        deployed_at = deployment.get("deployed_at")
-        if started_at and deployed_at and status == "success":
-            lead_times.append(
-                (parse_time(deployed_at) - parse_time(started_at)).total_seconds()
-                / 3600
-            )
-
-        failed_at = deployment.get("failed_at")
-        recovered_at = deployment.get("recovered_at")
-        if failed_at and recovered_at:
-            recovery_times.append(
-                (parse_time(recovered_at) - parse_time(failed_at)).total_seconds()
-                / 3600
-            )
-
-    github_deployment_count = len(deployments)
-    manual_deployment_count = len(manual_deployments)
-    deployment_count = github_deployment_count + manual_deployment_count
-
+    metrics = {
+        "deployments_per_week": per_week,
+        "lead_time_hours": round(statistics.median(lead_times), 2) if lead_times else None,
+        "change_failure_rate_percent": round(len(failures) / len(releases) * 100, 1) if releases else None,
+        "time_to_restore_hours": round(statistics.mean(restore_times), 2) if restore_times else None,
+    }
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "observation_days": observation_days,
-        "commit_count": len(commits),
-        "deployment_frequency_per_month": round(
-            deployment_count / observation_days * 30, 2
-        ),
-        "lead_time_hours": round(statistics.median(lead_times), 2)
-        if lead_times
-        else None,
-        "change_failure_rate_percent": round(
-            failed_deployments / deployment_count * 100, 1
-        )
-        if deployment_count
-        else None,
-        "mean_time_to_restore_hours": round(statistics.mean(recovery_times), 2)
-        if recovery_times
-        else None,
-        "deployment_count": deployment_count,
-        "github_deployment_count": github_deployment_count,
-        "manual_deployment_count": manual_deployment_count,
-        "failed_deployment_count": failed_deployments,
-        "source_note": (
-            "GitHub API history combined with the versioned manual release log."
-        ),
-        "note": (
-            "MTTR is not applicable because no production incidents and recoveries "
-            "have been recorded."
-            if not recovery_times
-            else "All four metrics are calculated from recorded release events."
-        ),
+        "generated_at": now.isoformat(),
+        "environment": ENVIRONMENT,
+        "observation_days": round(days, 1),
+        "deployments": len(releases),
+        "successful": len(successes),
+        "failed": len(failures),
+        "restored": len(restore_times),
+        **metrics,
+        "levels": {name: level(name, value) for name, value in metrics.items()},
+        "releases": [
+            {
+                "sha": r.sha[:7],
+                "change": r.change,
+                "state": r.state,
+                "finished_at": r.finished_at.isoformat(),
+                "lead_time_hours": round((r.finished_at - r.first_commit_at).total_seconds() / 3600, 2),
+            }
+            for r in releases
+        ],
     }
 
 
-def format_duration(hours: float | None) -> str:
+# ---------------------------------------------------------------- output
+
+def fmt_hours(hours: float | None) -> str:
     if hours is None:
         return "N/A"
-    if hours >= 24:
-        days = hours / 24
-        return f"{days:.0f} days" if days.is_integer() else f"{days:.1f} days"
-    return f"{hours:.1f} h"
+    if hours < 1:
+        return f"{hours * 60:.0f} min"
+    if hours < 48:
+        return f"{hours:.1f} h"
+    return f"{hours / 24:.1f} days"
+
+
+def cards(m: dict) -> list[tuple[str, str, str]]:
+    lv = m["levels"]
+    per_week = "N/A" if m["deployments_per_week"] is None else f"{m['deployments_per_week']} / week"
+    cfr = "N/A" if m["change_failure_rate_percent"] is None else f"{m['change_failure_rate_percent']}%"
+    return [
+        ("Deployment Frequency", per_week,
+         f"{m['successful']} successful deployments\nin {m['observation_days']} days · {lv['deployments_per_week']}"),
+        ("Lead Time for Changes", fmt_hours(m["lead_time_hours"]),
+         f"median, first commit -> production\n{lv['lead_time_hours']}"),
+        ("Change Failure Rate", cfr,
+         f"{m['failed']} failed of {m['deployments']} deployments\n{lv['change_failure_rate_percent']}"),
+        ("Time to Restore", fmt_hours(m["time_to_restore_hours"]),
+         f"{m['restored']} recoveries after failure\n{lv['time_to_restore_hours']}"),
+    ]
 
 
 def render_dashboard(metrics: dict, output: Path) -> None:
-    release_count = metrics["deployment_count"]
-    failed_count = metrics["failed_deployment_count"]
-    cards = [
-        (
-            "Deployment Frequency",
-            f"{metrics['deployment_frequency_per_month']} / month",
-            f"{release_count} recorded release in\n{metrics['observation_days']} observation days",
-        ),
-        (
-            "Lead Time for Changes",
-            format_duration(metrics["lead_time_hours"]),
-            f"Median across {release_count}\nrecorded release",
-        ),
-        (
-            "Change Failure Rate",
-            f"{metrics['change_failure_rate_percent']}%",
-            f"{failed_count} failed releases out of\n{release_count} recorded release",
-        ),
-        (
-            "Mean Time to Restore",
-            format_duration(metrics["mean_time_to_restore_hours"]),
-            "No production incidents\nor recovery events recorded",
-        ),
-    ]
+    import matplotlib
 
-    fig, ax = plt.subplots(figsize=(11, 4.4), dpi=220)
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import FancyBboxPatch
+
+    fig = plt.figure(figsize=(12, 7.2), dpi=180)
     fig.patch.set_facecolor("white")
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 4)
-    ax.axis("off")
+    top = fig.add_axes([0, 0.42, 1, 0.58])
+    top.set_xlim(0, 12)
+    top.set_ylim(0, 4.2)
+    top.axis("off")
+    top.text(0.3, 3.95, "Pelargonium Shop — DORA metrics", fontsize=15, fontweight="bold", color="#231A27")
+    top.text(11.7, 3.95, "source: GitHub Deployments · environment production",
+             fontsize=9, color="#666666", ha="right")
+    for i, (title, value, note) in enumerate(cards(metrics)):
+        x = 0.3 + i * 2.88
+        top.add_patch(FancyBboxPatch((x, 0.3), 2.7, 3.2, boxstyle="round,pad=0.04,rounding_size=0.12",
+                                     linewidth=1.2, edgecolor="#345E4A", facecolor="#EEF4F0"))
+        top.text(x + 0.18, 3.05, title, fontsize=10.5, fontweight="bold", color="#345E4A")
+        top.text(x + 0.18, 2.05, value, fontsize=20, fontweight="bold", color="#231A27")
+        top.text(x + 0.18, 0.85, note, fontsize=8.5, color="#4A4A4A")
 
-    positions = [(0.35, 2.15), (5.15, 2.15), (0.35, 0.15), (5.15, 0.15)]
-    for (title, value, note), (x, y) in zip(cards, positions):
-        box = FancyBboxPatch(
-            (x, y),
-            4.5,
-            1.55,
-            boxstyle="round,pad=0.04,rounding_size=0.12",
-            linewidth=1.2,
-            edgecolor="#6B4C7A",
-            facecolor="#F4EFF7",
-        )
-        ax.add_patch(box)
-        ax.text(
-            x + 0.22,
-            y + 1.22,
-            title,
-            fontsize=11,
-            fontweight="bold",
-            color="#4F365B",
-            va="center",
-        )
-        ax.text(
-            x + 0.22,
-            y + 0.78,
-            value,
-            fontsize=17,
-            fontweight="bold",
-            color="#231A27",
-            va="center",
-        )
-        ax.text(
-            x + 2.55,
-            y + 0.70,
-            note,
-            fontsize=8.8,
-            color="#4A4A4A",
-            va="center",
-        )
+    ax = fig.add_axes([0.07, 0.08, 0.9, 0.3])
+    rows = metrics["releases"]
+    if rows:
+        colors = ["#345E4A" if r["state"] == "success" else "#B3261E" for r in rows]
+        ax.bar(range(len(rows)), [r["lead_time_hours"] for r in rows], color=colors)
+        ax.set_xticks(range(len(rows)), [r["sha"] for r in rows], fontsize=7, rotation=45)
+        ax.set_ylabel("lead time, h", fontsize=9)
+        ax.set_title("Lead time of each deployment (red = failed)", fontsize=10, loc="left")
+        ax.grid(axis="y", alpha=0.25)
+    else:
+        ax.axis("off")
+        ax.text(0.5, 0.5, "No production deployments yet", ha="center", va="center", fontsize=11, color="#666666")
 
-    ax.text(
-        0.35,
-        3.88,
-        "Pelargonium Shop DORA baseline",
-        fontsize=14,
-        fontweight="bold",
-        color="#231A27",
-    )
-    ax.text(
-        9.65,
-        3.88,
-        "GitHub history + manual Tilda release log",
-        fontsize=8.8,
-        color="#666666",
-        ha="right",
-    )
-    ax.text(
-        0.35,
-        0.01,
-        (
-            f"Real data: {metrics['commit_count']} commits, "
-            f"{metrics['github_deployment_count']} GitHub deployments, "
-            f"{metrics['manual_deployment_count']} manual Tilda release."
-        ),
-        fontsize=8.4,
-        color="#666666",
-    )
-
-    plt.tight_layout(pad=0.4)
     output.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output, bbox_inches="tight", facecolor="white")
+    fig.savefig(output, facecolor="white")
     plt.close(fig)
+
+
+def summary_markdown(metrics: dict) -> str:
+    lines = ["## DORA metrics (production)", "", "| Metric | Value | Level |", "| --- | --- | --- |"]
+    keys = ["deployments_per_week", "lead_time_hours", "change_failure_rate_percent", "time_to_restore_hours"]
+    for (title, value, _), key in zip(cards(metrics), keys, strict=True):
+        lines.append(f"| {title} | {value} | {metrics['levels'][key]} |")
+    lines += ["", "| Deployment | Change | Result | Lead time |", "| --- | --- | --- | --- |"]
+    for r in metrics["releases"]:
+        lines.append(f"| `{r['sha']}` | {r['change']} | {r['state']} | {fmt_hours(r['lead_time_hours'])} |")
+    return "\n".join(lines) + "\n"
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default="dist/dora_dashboard.png")
     parser.add_argument("--json", default="dist/dora_metrics.json")
-    parser.add_argument(
-        "--manual-releases",
-        default=str(DEFAULT_MANUAL_RELEASES),
-        help="Versioned JSON log for manual releases that are not in GitHub Deployments.",
-    )
+    parser.add_argument("--summary", help="append a Markdown table here (e.g. $GITHUB_STEP_SUMMARY)")
     args = parser.parse_args()
 
-    metrics = collect_metrics(Path(args.manual_releases))
-    json_path = Path(args.json)
-    json_path.parent.mkdir(parents=True, exist_ok=True)
-    json_path.write_text(
-        json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    metrics = calculate(collect_releases())
+    Path(args.json).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.json).write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
     render_dashboard(metrics, Path(args.output))
-    print(json.dumps(metrics, ensure_ascii=False, indent=2))
+    if args.summary:
+        with open(args.summary, "a", encoding="utf-8") as fh:
+            fh.write(summary_markdown(metrics))
+    print(json.dumps({k: v for k, v in metrics.items() if k != "releases"}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
