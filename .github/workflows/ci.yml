@@ -143,6 +143,16 @@ jobs:
           python -m pip install pillow
           python backend/scripts/smoke_test.py http://localhost:8010 ci-admin-password ci-tilda-token
 
+      - name: End-to-end tests in a browser (Playwright)
+        env:
+          BASE_URL: http://localhost:8010
+          ADMIN_PASSWORD: ci-admin-password
+        # official Playwright image: browser and system libraries do not depend on the runner's Ubuntu version
+        run: >-
+          docker run --rm --network host -v "$PWD:/w" -w /w -e BASE_URL -e ADMIN_PASSWORD
+          mcr.microsoft.com/playwright/python:v1.49.1-noble
+          bash -c "pip install -q --break-system-packages pytest playwright==1.49.1 && python -m pytest backend/e2e -q"
+
       - name: Service logs on failure
         if: failure()
         run: docker logs app
