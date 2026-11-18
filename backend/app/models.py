@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,7 +12,7 @@ DELIVERY_METHODS = ("pickup", "courier")
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Variety(Base):
@@ -49,7 +49,8 @@ class Order(Base):
     status: Mapped[str] = mapped_column(String(12), default="new", index=True)
     total: Mapped[int] = mapped_column(Integer)
 
-    items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan", lazy="selectin")
+    items: Mapped[list["OrderItem"]] = relationship(
+        back_populates="order", cascade="all, delete-orphan", lazy="selectin")
 
     @property
     def number(self) -> str:

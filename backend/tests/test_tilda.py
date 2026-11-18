@@ -13,7 +13,8 @@ def test_connection_test_request(client):
 
 
 def test_rejects_wrong_token(client):
-    r = client.post("/api/tilda/webhook?token=wrong", data={"name": "Ая", "phone": "87011112233", "variety": "Lord Bute"})
+    form = {"name": "Ая", "phone": "87011112233", "variety": "Lord Bute"}
+    r = client.post("/api/tilda/webhook?token=wrong", data=form)
     assert r.status_code == 401
 
 

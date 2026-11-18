@@ -53,8 +53,8 @@ def change_status(db: Session, order: Order, new_status: str) -> Order:
                              .values(stock=Variety.stock - item.qty))
             if res.rowcount != 1:
                 db.rollback()
-                raise HTTPException(status.HTTP_409_CONFLICT,
-                                    detail={"code": "out_of_stock", "items": [{"variety_id": item.variety_id, "name": item.name}]})
+                short = [{"variety_id": item.variety_id, "name": item.name}]
+                raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "out_of_stock", "items": short})
     elif now_cancelled and not was_cancelled:
         for item in order.items:
             db.execute(update(Variety).where(Variety.id == item.variety_id).values(stock=Variety.stock + item.qty))

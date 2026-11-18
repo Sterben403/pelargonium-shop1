@@ -94,7 +94,8 @@ check("курьер без адреса → 422", s == 422)
 s, r = call("POST", "/api/orders", {**order, "items": [{"variety_id": target["id"], "qty": target["stock"] + 1}]})
 check("больше, чем в наличии → 409", s == 409 and r["detail"]["code"] == "out_of_stock")
 s, created = call("POST", "/api/orders", order)
-check("POST /api/orders", s == 201, f"{created.get('number')} на {created.get('total')} ₸" if s == 201 else str(created))
+summary = f"{created.get('number')} на {created.get('total')} ₸" if s == 201 else str(created)
+check("POST /api/orders", s == 201, summary)
 after = call("GET", f"/api/varieties/{target['id']}")[1]
 check("наличие уменьшилось на 2", after["stock"] == target["stock"] - 2, f"{target['stock']} → {after['stock']}")
 
@@ -142,9 +143,8 @@ name = f"Smoke Variety {uuid.uuid4().hex[:6]}"
 s, v = call("POST", "/api/admin/varieties", {"name": name, "type": "rosebud", "color": "pink",
                                              "price": 3100, "stock": 3, "desc_ru": "Тестовый сорт"}, auth=True)
 check("добавление сорта", s == 201, name)
-check("повтор названия → 409",
-      call("POST", "/api/admin/varieties", {"name": name.upper(), "type": "ivy", "color": "red", "price": 1, "stock": 0},
-           auth=True)[0] == 409)
+duplicate = {"name": name.upper(), "type": "ivy", "color": "red", "price": 1, "stock": 0}
+check("повтор названия → 409", call("POST", "/api/admin/varieties", duplicate, auth=True)[0] == 409)
 s, r = call("PATCH", f"/api/admin/varieties/{v['id']}", {"price": 2800, "stock": 5}, auth=True)
 check("изменение цены и наличия", s == 200 and r["price"] == 2800 and r["stock"] == 5)
 body, ctype = multipart_png()
@@ -152,7 +152,8 @@ s, r = call("POST", f"/api/admin/varieties/{v['id']}/photo", raw=body, ctype=cty
 check("загрузка фото", s == 200 and r["photo_url"].startswith("/uploads/"), r.get("photo_url") if s == 200 else r)
 if s == 200:
     ps, img = call("GET", r["photo_url"])
-    check("фото раздаётся сервером", ps == 200 and isinstance(img, bytes) and img[:2] == b"\xff\xd8", f"{len(img)} байт JPEG")
+    is_jpeg = isinstance(img, bytes) and img[:2] == b"\xff\xd8"
+    check("фото раздаётся сервером", ps == 200 and is_jpeg, f"{len(img)} байт JPEG")
 check("в каталоге есть новый сорт", any(x["name"] == name for x in call("GET", "/api/varieties")[1]))
 check("удаление сорта", call("DELETE", f"/api/admin/varieties/{v['id']}", auth=True)[0] == 204)
 check("сорт пропал из каталога", all(x["name"] != name for x in call("GET", "/api/varieties")[1]))

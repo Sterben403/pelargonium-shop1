@@ -5,7 +5,7 @@ Token = base64(expiry timestamp) + "." + HMAC-SHA256 signature. Stateless, no ex
 import base64
 import hashlib
 import hmac
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import Header, HTTPException, status
 
@@ -21,7 +21,7 @@ def check_password(password: str) -> bool:
 
 
 def issue_token() -> tuple[str, datetime]:
-    expires = datetime.now(timezone.utc) + timedelta(hours=config.TOKEN_TTL_HOURS)
+    expires = datetime.now(UTC) + timedelta(hours=config.TOKEN_TTL_HOURS)
     payload = base64.urlsafe_b64encode(str(int(expires.timestamp())).encode()).decode()
     return f"{payload}.{_sign(payload)}", expires
 
@@ -32,7 +32,7 @@ def verify_token(token: str) -> bool:
         if not hmac.compare_digest(sig, _sign(payload)):
             return False
         expires = int(base64.urlsafe_b64decode(payload.encode()).decode())
-        return expires > datetime.now(timezone.utc).timestamp()
+        return expires > datetime.now(UTC).timestamp()
     except (ValueError, UnicodeDecodeError):
         return False
 

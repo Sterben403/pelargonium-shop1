@@ -9,8 +9,7 @@ from sqlalchemy.orm import Session
 from .. import config
 from ..db import get_db
 from ..models import Order, Variety
-from ..schemas import (LoginIn, OrderOut, Stats, Status, StatusUpdate, TokenOut, VarietyCreate,
-                       VarietyOut, VarietyUpdate)
+from ..schemas import LoginIn, OrderOut, Stats, Status, StatusUpdate, TokenOut, VarietyCreate, VarietyOut, VarietyUpdate
 from ..security import check_password, issue_token, require_admin
 from ..services import change_status
 
@@ -133,7 +132,7 @@ async def upload_photo(variety_id: int, file: UploadFile = File(...), db: Sessio
         img = Image.open(io.BytesIO(raw))
         img = ImageOps.exif_transpose(img).convert("RGB")  # phone photos come rotated via EXIF
     except (UnidentifiedImageError, OSError):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail={"code": "not_an_image"})
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail={"code": "not_an_image"}) from None
     img.thumbnail((1200, 1200))
 
     config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

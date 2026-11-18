@@ -118,7 +118,7 @@ async def tilda_webhook(request: Request, db: Session = Depends(get_db)):
     except ValidationError as e:
         log.warning("Invalid Tilda order: %s", e.errors())
         raise HTTPException(422,
-                            detail={"code": "invalid_order", "errors": [err["msg"] for err in e.errors()]})
+                            detail={"code": "invalid_order", "errors": [err["msg"] for err in e.errors()]}) from e
 
     order = place_order(db, order_in)
     order.comment = (order.comment + " [Tilda]").strip()
