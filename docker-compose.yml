@@ -42,6 +42,11 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://pelargonium:pelargonium@db:5432/pelargonium
+      # smart search: Ollama runs on the host computer (AI_SEARCH_ENABLED=true docker compose up -d app)
+      AI_SEARCH_ENABLED: ${AI_SEARCH_ENABLED:-false}
+      OLLAMA_URL: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:8020:8000"  # reachable only from this computer
 

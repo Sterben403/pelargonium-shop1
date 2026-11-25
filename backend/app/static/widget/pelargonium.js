@@ -17,9 +17,24 @@
   var TYPES = ['zonal', 'rosebud', 'ivy', 'star', 'regal', 'angel'];
   var COLORS = { pink: '#ec8fb0', red: '#d9192c', white: '#ffffff', purple: '#9b59b6', salmon: '#f4876a' };
   var EXTRA = {
-    ru: { loading: 'Загружаем каталог…', errLoad: 'Не удалось загрузить каталог.', retry: 'Повторить', errServer: 'Не получилось отправить заявку. Попробуйте ещё раз или позвоните нам.', careLink: 'Памятка по уходу' },
-    kk: { loading: 'Каталог жүктелуде…', errLoad: 'Каталогты жүктеу мүмкін болмады.', retry: 'Қайталау', errServer: 'Өтінімді жіберу мүмкін болмады. Қайталап көріңіз немесе бізге қоңырау шалыңыз.', careLink: 'Күтім жадынамасы' },
-    en: { loading: 'Loading the catalog…', errLoad: 'Could not load the catalog.', retry: 'Retry', errServer: 'Could not send your request. Please try again or call us.', careLink: 'Care guide' }
+    ru: { loading: 'Загружаем каталог…', errLoad: 'Не удалось загрузить каталог.', retry: 'Повторить', errServer: 'Не получилось отправить заявку. Попробуйте ещё раз или позвоните нам.', careLink: 'Памятка по уходу',
+      searchAi: 'Название или описание: «белые розочки до 4000»…', aiBtn: '✨ Подобрать с ИИ', aiThinking: 'Подбираем сорта…',
+      aiFound: 'Подбор ИИ по запросу', aiNote: 'ИИ может ошибаться — проверьте описание сорта. Цена и наличие — из каталога.',
+      aiClarify: 'Уточните, пожалуйста: какой цвет, бюджет или место (подоконник, балкон, кашпо)? С вопросами о здоровье лучше обратиться к специалисту.',
+      aiNone: 'Подходящих сортов в каталоге нет. Попробуйте смягчить условия.', aiFallback: 'Умный подбор сейчас недоступен — показан поиск по названию.',
+      aiShowAll: 'Показать весь каталог', aiHint: 'Не нашли по названию? Опишите словами, что хотите, и нажмите' },
+    kk: { loading: 'Каталог жүктелуде…', errLoad: 'Каталогты жүктеу мүмкін болмады.', retry: 'Қайталау', errServer: 'Өтінімді жіберу мүмкін болмады. Қайталап көріңіз немесе бізге қоңырау шалыңыз.', careLink: 'Күтім жадынамасы',
+      searchAi: 'Атауы немесе сипаттамасы: «4000-ға дейін ақ раушандар»…', aiBtn: '✨ ЖИ-мен таңдау', aiThinking: 'Сорттарды таңдап жатырмыз…',
+      aiFound: 'ЖИ таңдауы, сұрау', aiNote: 'ЖИ қателесуі мүмкін — сорт сипаттамасын тексеріңіз. Баға мен қолжетімділік — каталогтан.',
+      aiClarify: 'Нақтылаңызшы: қандай түс, бюджет немесе орын (терезе алды, балкон, кашпо)? Денсаулық сұрақтары бойынша маманға жүгініңіз.',
+      aiNone: 'Каталогта сәйкес сорт жоқ. Шарттарды жұмсартып көріңіз.', aiFallback: 'Ақылды таңдау қазір қолжетімсіз — атауы бойынша іздеу көрсетілді.',
+      aiShowAll: 'Бүкіл каталогты көрсету', aiHint: 'Атауы бойынша таппадыңыз ба? Не қалайтыныңызды сөзбен жазып, басыңыз' },
+    en: { loading: 'Loading the catalog…', errLoad: 'Could not load the catalog.', retry: 'Retry', errServer: 'Could not send your request. Please try again or call us.', careLink: 'Care guide',
+      searchAi: 'Name or description: "white mini roses under 4000"…', aiBtn: '✨ Pick with AI', aiThinking: 'Picking varieties…',
+      aiFound: 'AI picks for', aiNote: 'AI can make mistakes — check the variety description. Price and stock come from the catalog.',
+      aiClarify: 'Could you be more specific: colour, budget or place (windowsill, balcony, hanging basket)? For health questions, please ask a specialist.',
+      aiNone: 'No variety in the catalog matches. Try relaxing the conditions.', aiFallback: 'Smart search is unavailable right now — showing search by name.',
+      aiShowAll: 'Show the whole catalog', aiHint: 'Nothing by name? Describe what you want in your own words and press' }
   };
 
   var store = {
@@ -33,6 +48,7 @@
   var state = { q: '', type: '', colors: [], stock: false, sort: 'default' };
   var list = [], known = {}, cart = store.get('cart', {}), view = 'cart', draft = null, lastOrder = null, modalId = null, modalQty = 1;
   var root, el = {};
+  var aiReady = false, ai = null, aiSeq = 0;  // ai = {q, status, fallback} while showing smart-search results
 
   function t(k) { return (EXTRA[lang] && EXTRA[lang][k]) || (T[lang] && T[lang][k] != null ? T[lang][k] : T.ru[k]); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -94,6 +110,9 @@
 .psw-radio{display:flex;gap:8px}.psw-radio label{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;font-weight:500;display:flex;gap:8px;align-items:flex-start}.psw-radio label.on{border-color:var(--g);background:var(--gs)}\
 .psw-hint{font-size:12px;color:var(--mut)}.psw-ok{text-align:center;padding:30px 10px}.psw-num{font-size:28px;font-weight:800;color:var(--g);margin:8px 0}\
 .psw-toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;z-index:10000;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}.psw-toast.psw-show{opacity:1}\
+.psw-ai{background:var(--p)}.psw-ai[hidden]{display:none}\
+.psw-aibar{background:var(--ps);border-radius:14px;padding:12px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.psw-aibar[hidden]{display:none}\
+.psw-aibar b{color:var(--p)}.psw-aibar .psw-hint{margin-top:2px}\
 @media (max-width:820px){.psw-modal{display:block}.psw-modal .psw-img{min-height:0;height:300px}}';
 
   /* ---------------- skeleton ---------------- */
@@ -105,9 +124,9 @@
     root.innerHTML =
       '<div class="psw-top"><div class="psw-langs" ' + (showSwitch ? '' : 'hidden') + '>' +
       LANGS.map(function (l) { return '<button data-l="' + l + '">' + (l === 'kk' ? 'KZ' : l.toUpperCase()) + '</button>'; }).join('') + '</div></div>' +
-      '<div class="psw-filters"><input type="search" data-r="q"><select data-r="type"></select><div class="psw-chips" data-r="colors"></div>' +
+      '<div class="psw-filters"><input type="search" data-r="q" maxlength="400"><button class="psw-btn psw-ai" data-r="aiBtn" data-act="ai" hidden></button><select data-r="type"></select><div class="psw-chips" data-r="colors"></div>' +
       '<label class="psw-check"><input type="checkbox" data-r="stock"> <span data-r="stockLbl"></span></label><select data-r="sort"></select></div>' +
-      '<div class="psw-grid" data-r="grid"></div>' +
+      '<div class="psw-aibar" data-r="aiBar" hidden></div><div class="psw-grid" data-r="grid"></div>' +
       '<button class="psw-btn psw-cartbtn" data-r="cartBtn"><span data-r="cartLbl"></span><span class="psw-badge" data-r="count">0</span></button>' +
       '<div class="psw-ov" data-r="modalOv"><div class="psw-modal"><button class="psw-x" data-act="closeModal">×</button><div class="psw-img" data-r="mImg"></div><div class="psw-info" data-r="mInfo"></div></div></div>' +
       '<div class="psw-ov" data-r="cartOv"></div>' +
@@ -123,12 +142,14 @@
     root.querySelector('.psw-langs').addEventListener('click', function (e) {
       var l = e.target.dataset.l; if (!l) return;
       if (view === 'form') saveDraft();
-      lang = l; store.set('lang', l); renderStatic(); renderGrid(); renderCount();
+      lang = l; store.set('lang', l); renderStatic(); renderAiBar(); renderGrid(); renderCount();
       if (el.drawer.classList.contains('open')) renderCart();
       if (modalId) renderModal();
     });
     var timer;
     el.q.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(function () { state.q = el.q.value; load(); }, 250); });
+    // Enter runs the smart search when the model is ready; typing goes back to the regular search by name
+    el.q.addEventListener('keydown', function (e) { if (e.key === 'Enter' && aiReady && el.q.value.trim()) { e.preventDefault(); clearTimeout(timer); runAI(); } });
     el.type.addEventListener('change', function () { state.type = el.type.value; load(); });
     el.sort.addEventListener('change', function () { state.sort = el.sort.value; load(); });
     el.stock.addEventListener('change', function () { state.stock = el.stock.checked; load(); });
@@ -145,6 +166,8 @@
       else if (a === 'color') { var i = state.colors.indexOf(b.dataset.c); i >= 0 ? state.colors.splice(i, 1) : state.colors.push(b.dataset.c); renderColors(); load(); }
       else if (a === 'reset') { state = { q: '', type: '', colors: [], stock: false, sort: 'default' }; el.q.value = ''; el.stock.checked = false; renderStatic(); load(); }
       else if (a === 'retry') load();
+      else if (a === 'ai') runAI();
+      else if (a === 'aiOff') { el.q.value = ''; state.q = ''; load(); }
       else if (a === 'closeModal') closeModal();
       else if (a === 'closeCart') closeCart();
       else if (a === 'mMinus') { modalQty = Math.max(1, modalQty - 1); renderModal(); }
@@ -160,7 +183,8 @@
   /* ---------------- catalog ---------------- */
   function renderStatic() {
     root.querySelectorAll('.psw-langs button').forEach(function (b) { b.classList.toggle('on', b.dataset.l === lang); });
-    el.q.placeholder = t('search');
+    el.q.placeholder = aiReady ? t('searchAi') : t('search');
+    el.aiBtn.textContent = t('aiBtn'); el.aiBtn.hidden = !aiReady;
     el.type.innerHTML = '<option value="">' + esc(t('allTypes')) + '</option>' + TYPES.map(function (k) { return '<option value="' + k + '">' + esc(t('types')[k]) + '</option>'; }).join('');
     el.type.value = state.type;
     el.sort.innerHTML = [['default', 'sortDefault'], ['price_asc', 'sortPriceAsc'], ['price_desc', 'sortPriceDesc'], ['name', 'sortName']]
@@ -187,6 +211,7 @@
   var loadSeq = 0;
   function load() {
     var seq = ++loadSeq;
+    ai = null; aiSeq++; renderAiBar();
     if (!list.length) el.grid.innerHTML = '<div class="psw-empty">' + esc(t('loading')) + '</div>';
     return api('/api/varieties?' + query()).then(function (r) {
       if (seq !== loadSeq) return;  // a newer request already answered
@@ -204,13 +229,46 @@
     return '<span class="psw-tag">' + esc(t('inStock')) + '</span>';
   }
   function renderGrid() {
-    if (!list.length) { el.grid.innerHTML = '<div class="psw-empty">' + esc(t('nothing')) + '<br><br><button class="psw-btn ghost sm" data-act="reset">' + esc(t('resetFilters')) + '</button></div>'; return; }
+    if (ai && !list.length) {
+      var msg = ai.status === 'clarify' ? t('aiClarify') : t('aiNone');
+      el.grid.innerHTML = '<div class="psw-empty">' + esc(msg) + '<br><br><button class="psw-btn ghost sm" data-act="aiOff">' + esc(t('aiShowAll')) + '</button></div>'; return;
+    }
+    if (!list.length) {
+      var hint = aiReady && state.q.trim() ? '<br><br>' + esc(t('aiHint')) + ' <button class="psw-btn psw-ai sm" data-act="ai">' + esc(t('aiBtn')) + '</button>' : '';
+      el.grid.innerHTML = '<div class="psw-empty">' + esc(t('nothing')) + hint + '<br><br><button class="psw-btn ghost sm" data-act="reset">' + esc(t('resetFilters')) + '</button></div>'; return;
+    }
     el.grid.innerHTML = list.map(function (v) {
       return '<article class="psw-card ' + (v.stock <= 0 ? 'psw-out' : '') + '" data-act="open" data-id="' + v.id + '">' +
         '<div class="psw-img' + (photo(v) ? '' : ' psw-noimg') + '">' + imgHtml(v) + stockTag(v) + '</div>' +
         '<div class="psw-body"><h3>' + esc(v.name) + '</h3><div class="psw-meta">' + esc(t('types')[v.type]) + ' · ' + esc(t('colors')[v.color]) + '</div>' +
         '<div class="psw-price">' + money(v.price) + '<button class="psw-btn sm" data-act="add" data-id="' + v.id + '"' + (v.stock <= 0 ? ' disabled' : '') + '>' + esc(t('addToCart')) + '</button></div></div></article>';
     }).join('');
+  }
+
+  /* ---------------- smart search (AI) ---------------- */
+  function renderAiBar() {
+    if (!ai) { el.aiBar.hidden = true; return; }
+    el.aiBar.hidden = false;
+    el.aiBar.innerHTML = ai.loading
+      ? '<div>' + esc(t('aiThinking')) + '</div>'
+      : '<div><div>' + (ai.fallback ? esc(t('aiFallback')) : esc(t('aiFound')) + ' <b>«' + esc(ai.q) + '»</b>') + '</div>' +
+        (ai.fallback ? '' : '<div class="psw-hint">' + esc(t('aiNote')) + '</div>') + '</div>' +
+        '<button class="psw-btn ghost sm" data-act="aiOff">' + esc(t('aiShowAll')) + '</button>';
+  }
+  function runAI() {
+    var q = el.q.value.trim(); if (!q) { el.q.focus(); return; }
+    var seq = ++aiSeq; loadSeq++;  // drop any regular search still in flight
+    ai = { q: q, loading: true }; renderAiBar(); el.aiBtn.disabled = true;
+    api('/api/search?q=' + encodeURIComponent(q)).then(function (r) {
+      if (seq !== aiSeq) return;
+      if (r.status !== 200) throw new Error();
+      ai = { q: q, status: r.body.status, fallback: r.body.fallback };
+      list = r.body.items; list.forEach(function (v) { known[v.id] = v; });
+      renderAiBar(); renderGrid();
+    }).catch(function () {
+      if (seq !== aiSeq) return;
+      ai = null; renderAiBar(); state.q = q; load();
+    }).then(function () { el.aiBtn.disabled = false; });
   }
 
   /* ---------------- product modal ---------------- */
@@ -389,6 +447,8 @@
     mount();
     fetch(API + '/static/i18n.json').then(function (r) { return r.json(); }).then(function (dict) {
       T = dict; renderStatic();
+      // the smart-search button appears only when the server says the model is ready
+      api('/api/search/status').then(function (r) { aiReady = !!(r.status === 200 && r.body.ready); renderStatic(); }).catch(function () {});
       // the cart may hold varieties hidden by current filters: load the full list once
       return api('/api/varieties').then(function (r) { if (r.status === 200) r.body.forEach(function (v) { known[v.id] = v; }); renderCount(); });
     }).then(load).catch(function () {

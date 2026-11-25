@@ -34,6 +34,12 @@ TILDA_WEBHOOK_TOKEN = os.getenv("TILDA_WEBHOOK_TOKEN", "dev-tilda-token")
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "8"))
 # Commit the running build was made from (set by the Docker image build in CI)
 # Render passes the deployed commit as RENDER_GIT_COMMIT
+# Smart search: the shopper describes a plant in their own words and a local model picks varieties.
+# Off by default (the hosted site has no model); with it off, or the model down, the regular search answers.
+AI_SEARCH_ENABLED = os.getenv("AI_SEARCH_ENABLED", "false").lower() == "true"
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
+AI_MODEL = os.getenv("AI_MODEL", "qwen2.5:3b")
+AI_TIMEOUT_S = float(os.getenv("AI_TIMEOUT_S", "60"))
 VERSION = os.getenv("APP_VERSION") or os.getenv("RENDER_GIT_COMMIT") or "dev"
 IS_PRODUCTION = os.getenv("APP_ENV") == "production"
 

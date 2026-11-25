@@ -12,7 +12,7 @@ from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 from . import config
 from .db import Base, SessionLocal, engine
-from .routers import admin, public, tilda
+from .routers import admin, public, search, tilda
 from .seed import seed_if_empty
 
 log = logging.getLogger("pelargonium")
@@ -51,6 +51,7 @@ app.add_middleware(
 )
 
 app.include_router(public.router)
+app.include_router(search.router)
 app.include_router(admin.router)
 app.include_router(admin.protected)
 app.include_router(tilda.router)
