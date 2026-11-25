@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Умный подбор пеларгоний — ИИ-прототип (ЛЗ 12)</title>
+<style>
+  :root { --bg:#faf7f4; --card:#fff; --ink:#2b2420; --muted:#7a6f68; --line:#e8e0d8; --accent:#7b4a8e; --accent-soft:#efe6f3; --warn:#9a5a00; --warn-soft:#fff4e0; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:1100px; margin:0 auto; padding:28px 20px 48px; }
+  header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
+  h1 { margin:0 0 4px; font-size:26px; }
+  .sub { color:var(--muted); margin:0; }
+  .badge { display:inline-block; background:var(--accent-soft); color:var(--accent); border-radius:999px; padding:3px 10px; font-size:13px; font-weight:600; }
+  .status { font-size:13px; color:var(--muted); }
+  .status b.ok { color:#2e7d32; } .status b.off { color:#b3261e; }
+  form { display:flex; gap:10px; margin:22px 0 10px; }
+  input[type=search] { flex:1; padding:14px 16px; font-size:17px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+  input[type=search]:focus { outline:2px solid var(--accent); border-color:transparent; }
+  button { padding:0 22px; border:0; border-radius:12px; background:var(--accent); color:#fff; font-size:16px; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:wait; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+  .chip { background:#fff; border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:14px; cursor:pointer; color:var(--ink); font-weight:400; }
+  .chip:hover { border-color:var(--accent); color:var(--accent); }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:760px) { .cols { grid-template-columns:1fr; } form { flex-direction:column; } button { padding:12px; } }
+  section { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; min-height:180px; }
+  section h2 { margin:0 0 2px; font-size:17px; }
+  .meta { color:var(--muted); font-size:13px; margin-bottom:12px; min-height:18px; }
+  .msg { padding:10px 12px; border-radius:10px; background:#f4f1ee; color:var(--muted); font-size:14px; }
+  .msg.warn { background:var(--warn-soft); color:var(--warn); }
+  .card { display:grid; grid-template-columns:72px 1fr auto; gap:12px; align-items:center; padding:10px 0; border-top:1px solid var(--line); }
+  .card:first-of-type { border-top:0; }
+  .card img, .noimg { width:72px; height:72px; object-fit:cover; border-radius:10px; background:#eee; }
+  .name { font-weight:600; }
+  .kind { color:var(--muted); font-size:13px; }
+  .price { font-weight:700; white-space:nowrap; text-align:right; }
+  .stock { font-size:12px; color:#2e7d32; font-weight:500; }
+  .stock.out { color:#b3261e; }
+  footer { margin-top:22px; color:var(--muted); font-size:13px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  footer a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <span class="badge">ИИ-прототип · ЛЗ 12</span>
+      <h1>Умный подбор пеларгоний</h1>
+      <p class="sub">Опишите, что хотите, своими словами — сравните обычный поиск и подбор с помощью ИИ.</p>
+    </div>
+    <div class="status" id="status">Проверяем модель…</div>
+  </header>
+
+  <form id="f">
+    <input type="search" id="q" maxlength="400" autocomplete="off" placeholder="Например: хочу белые цветы как маленькие розочки до 4 000 ₸" required>
+    <button id="go">Найти</button>
+  </form>
+  <div class="chips" id="chips"></div>
+
+  <div class="cols">
+    <section>
+      <h2>Обычный поиск</h2>
+      <div class="meta" id="b-meta">Ищет совпадение в названии сорта</div>
+      <div id="b-out"><div class="msg">Введите запрос</div></div>
+    </section>
+    <section>
+      <h2>Подбор с помощью ИИ</h2>
+      <div class="meta" id="a-meta">Локальная модель читает весь каталог</div>
+      <div id="a-out"><div class="msg">Введите запрос</div></div>
+    </section>
+  </div>
+
+  <footer>
+    <span>ИИ может ошибаться: проверяйте описание сорта. Цена и наличие всегда берутся из базы магазина. Запрос никуда не отправляется — модель работает на этом компьютере.</span>
+    <a href="/demo">Обычный каталог →</a>
+  </footer>
+</main>
+<script>
+  var EXAMPLES = ["хочу белые цветы как маленькие розочки до 4 000 ₸", "цветы похожие на анютины глазки",
+    "бархатные почти чёрно-бордовые цветы", "Лорд Бьют", "красная для подвесного кашпо до 3000",
+    "синие пеларгонии", "какой сорт безопасно съесть ребёнку?"];
+  var TYPE = {rosebud:"Розобудная", zonal:"Зональная", ivy:"Плющелистная", regal:"Королевская", star:"Звёздчатая", angel:"Ангел"};
+  var COLOR = {white:"белая", pink:"розовая", red:"красная", salmon:"лососевая", purple:"сиреневая"};
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function money(n) { return n.toLocaleString("ru-RU") + " ₸"; }
+  // Wikimedia serves only fixed thumbnail widths (the shop widget uses 500px too)
+  function thumb(url) { return url ? url.replace(/\/960px-/, "/500px-") : ""; }
+
+  EXAMPLES.forEach(function (text) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = text;
+    b.onclick = function () { $("q").value = text; run(); };
+    $("chips").appendChild(b);
+  });
+
+  function cards(data) {
+    if (data.status === "clarify") return '<div class="msg">Уточните, пожалуйста: какой цвет, бюджет или место (подоконник, балкон, кашпо)? По вопросам безопасности и здоровья лучше спросить специалиста.</div>';
+    if (!data.items.length) return '<div class="msg">Ничего не нашли. Попробуйте описать иначе или откройте <a href="/demo">весь каталог</a>.</div>';
+    return data.items.map(function (v) {
+      var img = v.photo_url ? '<img src="' + esc(thumb(v.photo_url)) + '" alt="' + esc(v.name) + '" loading="lazy" onerror="this.outerHTML=\'<div class=noimg></div>\'">' : '<div class="noimg"></div>';
+      var stock = v.stock > 0 ? '<div class="stock">в наличии: ' + v.stock + '</div>' : '<div class="stock out">нет в наличии</div>';
+      return '<div class="card">' + img + '<div><div class="name">' + esc(v.name) + '</div><div class="kind">' +
+        esc(TYPE[v.type] || v.type) + ' · ' + esc(COLOR[v.color] || v.color) + '</div></div><div><div class="price">' +
+        money(v.price) + '</div>' + stock + '</div></div>';
+    }).join("");
+  }
+
+  function search(mode, q, out, meta) {
+    out.innerHTML = '<div class="msg">' + (mode === "ai" ? "Модель думает…" : "Ищем…") + '</div>';
+    return fetch("/api/lab12/search?mode=" + mode + "&q=" + encodeURIComponent(q))
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) {
+        var warn = d.fallback ? '<div class="msg warn">' + esc(d.fallback) + '</div><br>' : '';
+        out.innerHTML = warn + cards(d);
+        meta.textContent = (d.latency_ms < 1000 ? d.latency_ms + " мс" : (d.latency_ms / 1000).toFixed(1).replace(".", ",") + " с") +
+          (d.cached ? " · из кэша" : "") + (mode === "ai" && d.used === "ai" ? " · ответ модели проверен по каталогу" : "");
+      })
+      .catch(function () { out.innerHTML = '<div class="msg warn">Сервер не ответил. Обновите страницу.</div>'; });
+  }
+
+  function run() {
+    var q = $("q").value.trim();
+    if (!q) return;
+    $("go").disabled = true;
+    Promise.all([search("baseline", q, $("b-out"), $("b-meta")), search("ai", q, $("a-out"), $("a-meta"))])
+      .then(function () { $("go").disabled = false; });
+  }
+  $("f").onsubmit = function (e) { e.preventDefault(); run(); };
+
+  fetch("/api/lab12/status").then(function (r) { return r.json(); }).then(function (s) {
+    $("status").innerHTML = !s.enabled ? 'ИИ <b class="off">выключен</b> — работает обычный поиск'
+      : s.model_ready ? 'Модель ' + esc(s.model) + ': <b class="ok">готова</b>'
+      : 'Модель ' + esc(s.model) + ': <b class="off">не запущена</b> — будет обычный поиск';
+  }).catch(function () { $("status").textContent = ""; });
+</script>
+</body>
+</html>
