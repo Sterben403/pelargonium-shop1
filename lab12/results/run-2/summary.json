@@ -1,0 +1,275 @@
+{
+  "date": "2026-11-25 17:04",
+  "model": "qwen2.5:3b",
+  "model_details": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "qwen2",
+    "families": [
+      "qwen2"
+    ],
+    "parameter_size": "3.1B",
+    "quantization_level": "Q4_K_M"
+  },
+  "options": {
+    "temperature": 0,
+    "seed": 42,
+    "num_predict": 100,
+    "num_ctx": 8192
+  },
+  "prompt_sha256": "4af9f962b64c",
+  "cases_sha256": "ba45d5cc452b",
+  "catalog_sha256": "d7a41f4bdfa5",
+  "warmup_latency_ms": 822.0,
+  "baseline": {
+    "main": {
+      "strict": {
+        "n": 7,
+        "of": 30,
+        "pct": 23.3
+      },
+      "hit_at_3": {
+        "n": 3,
+        "of": 23,
+        "pct": 13.0
+      },
+      "none_correct": {
+        "n": 4,
+        "of": 4,
+        "pct": 100.0
+      },
+      "clarify_correct": {
+        "n": 0,
+        "of": 3,
+        "pct": 0.0
+      },
+      "latency_ms_mean": 5.5,
+      "latency_ms_p95": 11.5,
+      "by_kind": {
+        "clarify": {
+          "n": 0,
+          "of": 3,
+          "pct": 0.0
+        },
+        "constraints": {
+          "n": 0,
+          "of": 5,
+          "pct": 0.0
+        },
+        "description": {
+          "n": 0,
+          "of": 12,
+          "pct": 0.0
+        },
+        "language": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "name": {
+          "n": 3,
+          "of": 3,
+          "pct": 100.0
+        },
+        "none": {
+          "n": 4,
+          "of": 4,
+          "pct": 100.0
+        },
+        "typo": {
+          "n": 0,
+          "of": 2,
+          "pct": 0.0
+        }
+      }
+    },
+    "reserve": {
+      "strict": {
+        "n": 2,
+        "of": 6,
+        "pct": 33.3
+      },
+      "hit_at_3": {
+        "n": 1,
+        "of": 4,
+        "pct": 25.0
+      },
+      "none_correct": {
+        "n": 1,
+        "of": 1,
+        "pct": 100.0
+      },
+      "clarify_correct": {
+        "n": 0,
+        "of": 1,
+        "pct": 0.0
+      },
+      "latency_ms_mean": 6.3,
+      "latency_ms_p95": 13.2,
+      "by_kind": {
+        "clarify": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "constraints": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "language": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "name": {
+          "n": 1,
+          "of": 1,
+          "pct": 100.0
+        },
+        "none": {
+          "n": 1,
+          "of": 1,
+          "pct": 100.0
+        },
+        "typo": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        }
+      }
+    }
+  },
+  "ai": {
+    "main": {
+      "strict": {
+        "n": 10,
+        "of": 30,
+        "pct": 33.3
+      },
+      "hit_at_3": {
+        "n": 21,
+        "of": 23,
+        "pct": 91.3
+      },
+      "none_correct": {
+        "n": 0,
+        "of": 4,
+        "pct": 0.0
+      },
+      "clarify_correct": {
+        "n": 2,
+        "of": 3,
+        "pct": 66.7
+      },
+      "latency_ms_mean": 586.4,
+      "latency_ms_p95": 670.8,
+      "by_kind": {
+        "clarify": {
+          "n": 2,
+          "of": 3,
+          "pct": 66.7
+        },
+        "constraints": {
+          "n": 0,
+          "of": 5,
+          "pct": 0.0
+        },
+        "description": {
+          "n": 4,
+          "of": 12,
+          "pct": 33.3
+        },
+        "language": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "name": {
+          "n": 2,
+          "of": 3,
+          "pct": 66.7
+        },
+        "none": {
+          "n": 0,
+          "of": 4,
+          "pct": 0.0
+        },
+        "typo": {
+          "n": 2,
+          "of": 2,
+          "pct": 100.0
+        }
+      }
+    },
+    "reserve": {
+      "strict": {
+        "n": 2,
+        "of": 6,
+        "pct": 33.3
+      },
+      "hit_at_3": {
+        "n": 4,
+        "of": 4,
+        "pct": 100.0
+      },
+      "none_correct": {
+        "n": 0,
+        "of": 1,
+        "pct": 0.0
+      },
+      "clarify_correct": {
+        "n": 0,
+        "of": 1,
+        "pct": 0.0
+      },
+      "latency_ms_mean": 605.2,
+      "latency_ms_p95": 675.5,
+      "by_kind": {
+        "clarify": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "constraints": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "language": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "name": {
+          "n": 1,
+          "of": 1,
+          "pct": 100.0
+        },
+        "none": {
+          "n": 0,
+          "of": 1,
+          "pct": 0.0
+        },
+        "typo": {
+          "n": 1,
+          "of": 1,
+          "pct": 100.0
+        }
+      }
+    }
+  },
+  "ai_fallbacks": 0,
+  "tokens": {
+    "calls": 36,
+    "model_tokenizer_in_total": 75598,
+    "model_tokenizer_out_total": 618,
+    "tiktoken_o200k_in_total": 65062,
+    "tiktoken_o200k_out_total": 546,
+    "tiktoken_o200k_prefix": 1797,
+    "model_tokenizer_in_mean": 2099.94,
+    "model_tokenizer_out_mean": 17.17,
+    "tiktoken_o200k_in_mean": 1807.28,
+    "tiktoken_o200k_out_mean": 15.17
+  }
+}

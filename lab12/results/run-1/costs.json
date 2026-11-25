@@ -1,0 +1,69 @@
+{
+  "tokens_per_query": {
+    "in": 1807.28,
+    "out": 15.17,
+    "cached_prefix": 1797
+  },
+  "load": {
+    "base": 3000,
+    "x10": 30000
+  },
+  "rates": {
+    "date": "2026-11-25",
+    "USD": 458.28,
+    "EUR": 501.45,
+    "url": "https://nationalbank.kz/ru/exchangerates/ezhednevnye-oficialnye-rynochnye-kursy-valyut"
+  },
+  "api": {
+    "OpenAI gpt-5-mini": {
+      "url": "https://developers.openai.com/api/docs/pricing",
+      "usd_per_query": 0.0004822,
+      "usd_per_query_cached": 7.78e-05,
+      "kzt_per_query": 0.22,
+      "kzt_month_base": 662.89,
+      "kzt_month_x10": 6628.93,
+      "kzt_month_base_cached": 107.01,
+      "kzt_month_x10_cached": 1070.11
+    },
+    "OpenAI gpt-5-nano": {
+      "url": "https://developers.openai.com/api/docs/pricing",
+      "usd_per_query": 9.64e-05,
+      "usd_per_query_cached": 1.56e-05,
+      "kzt_per_query": 0.04,
+      "kzt_month_base": 132.58,
+      "kzt_month_x10": 1325.79,
+      "kzt_month_base_cached": 21.4,
+      "kzt_month_x10_cached": 214.02
+    },
+    "Google gemini-3.5-flash-lite": {
+      "url": "https://aistudio.google.com/docs/pricing",
+      "usd_per_query": 0.0005801,
+      "usd_per_query_cached": 9.49e-05,
+      "kzt_per_query": 0.27,
+      "kzt_month_base": 797.56,
+      "kzt_month_x10": 7975.57,
+      "kzt_month_base_cached": 130.5,
+      "kzt_month_x10_cached": 1304.98
+    }
+  },
+  "self_hosted": {
+    "Hetzner CCX23 (4 vCPU, 16 GB, CPU)": {
+      "url": "https://www.hetzner.com/cloud/general-purpose/",
+      "eur_month": 73.49,
+      "setup_eur": 0,
+      "kzt_month_with_ops": 56852.0,
+      "setup_kzt": 0,
+      "breakeven_queries_vs_gpt5mini": 257270,
+      "breakeven_server_only": 166763
+    },
+    "Hetzner GEX45 (RTX PRO 4000, 24 GB)": {
+      "url": "https://www.hetzner.com/dedicated-rootserver/matrix-gpu/",
+      "eur_month": 214.0,
+      "setup_eur": 209.0,
+      "kzt_month_with_ops": 127310.0,
+      "setup_kzt": 104803,
+      "breakeven_queries_vs_gpt5mini": 576109,
+      "breakeven_server_only": 485606
+    }
+  }
+}
