@@ -6,7 +6,7 @@ pydantic>=2.5,<3
 python-multipart>=0.0.6
 python-dotenv>=1.0
 pillow>=10
+httpx>=0.27  # AI search calls the local model (Ollama)
 
 # tests
 pytest>=8
-httpx>=0.27
